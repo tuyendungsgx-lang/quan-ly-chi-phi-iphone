@@ -540,6 +540,27 @@
   .install-steps strong{color:var(--navy)}
   .install-tip{margin:0 22px 20px;padding:11px 13px;border-radius:11px;background:#FFF5E4;color:#80530E;font-size:11px;line-height:1.45}
   .install-actions{display:flex;justify-content:flex-end;padding:0 22px 22px}
+  .cloud-auth-sheet{width:min(460px,100%);overflow:hidden;border-radius:20px;background:#fff;box-shadow:0 30px 80px rgba(4,20,35,.38)}
+  .cloud-auth-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:22px;border-bottom:1px solid var(--line);background:linear-gradient(135deg,#EEF8F5,#F8FBFC)}
+  .cloud-auth-head h2{margin:0;color:var(--navy);font-size:20px}
+  .cloud-auth-head p{margin:5px 0 0;color:var(--muted);font-size:12px;line-height:1.45}
+  .cloud-auth-body{padding:20px 22px 22px}
+  .cloud-auth-fields{display:grid;gap:13px}
+  .cloud-auth-field{display:flex;flex-direction:column;gap:6px}
+  .cloud-auth-field label{color:var(--muted);font-size:10px;font-weight:800;letter-spacing:.65px;text-transform:uppercase}
+  .cloud-auth-field input{height:46px;padding:0 12px;border:1px solid var(--line);border-radius:10px;background:#F9FBFC;color:var(--text);font-size:14px;outline:none}
+  .cloud-auth-field input:focus{border-color:#68A8D3;box-shadow:0 0 0 3px #E6F2FA;background:#fff}
+  .cloud-auth-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:16px}
+  .cloud-auth-message{min-height:18px;margin-top:12px;color:var(--muted);font-size:11px;line-height:1.45}
+  .cloud-auth-message.error{color:#B42F48}
+  .cloud-auth-message.success{color:#087C68}
+  .cloud-auth-message.working{color:#355B87}
+  .cloud-user-card{display:none;padding:14px;border:1px solid #D7E8E2;border-radius:12px;background:#F2F9F7}
+  .cloud-user-card.show{display:block}
+  .cloud-user-email{color:#183E37;font-size:13px;font-weight:800;word-break:break-all}
+  .cloud-user-meta{margin-top:5px;color:#6E827E;font-size:11px}
+  .cloud-user-actions{display:flex;gap:9px;margin-top:14px}
+  .cloud-auth-note{margin:14px 0 0;color:#7A8994;font-size:10px;line-height:1.5}
   .analytics-card{margin:0 0 20px;padding:22px;border:1px solid var(--line);border-radius:18px;background:#fff;box-shadow:var(--shadow)}
   .analytics-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:18px}
   .analytics-title{margin:0;color:var(--navy);font-size:20px;line-height:1.2}
@@ -620,6 +641,8 @@
     .fab{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom));z-index:35;display:grid;place-items:center;width:58px;height:58px;border:0;border-radius:18px;background:linear-gradient(145deg,#17A88B,#08725F);color:#fff;font-size:30px;box-shadow:0 14px 30px rgba(8,114,95,.36);cursor:pointer}
     .install-overlay{align-items:flex-end;padding:0}
     .install-sheet{width:100%;border-radius:22px 22px 0 0;padding-bottom:env(safe-area-inset-bottom)}
+    .cloud-auth-sheet{width:100%;border-radius:22px 22px 0 0;padding-bottom:env(safe-area-inset-bottom)}
+    .cloud-auth-actions{grid-template-columns:1fr}
     .analytics-card{padding:16px;border-radius:15px}
     .analytics-head{display:block}
     .analytics-filters{grid-template-columns:1fr 1fr;padding:12px}
@@ -643,6 +666,7 @@
     </div>
     <div class="top-actions">
       <button class="icon-button" id="installAppBtn" onclick="requestAppInstall()" aria-label="Cài ứng dụng" hidden><b>⇩</b><span>Cài ứng dụng</span></button>
+      <button class="icon-button" id="cloudAccountBtn" onclick="openCloudAuth()" aria-label="Đăng nhập đồng bộ"><b>☁</b><span>Đăng nhập</span></button>
       <button class="icon-button" id="syncNowBtn" onclick="syncWithServer()" aria-label="Đồng bộ dữ liệu"><b>↻</b><span>Đồng bộ</span></button>
       <button class="btn btn-primary top-add" onclick="openModal()">+ Thêm khoản chi</button>
     </div>
@@ -892,6 +916,31 @@
   </div>
 </div>
 
+<div class="install-overlay" id="cloudAuthOverlay" role="dialog" aria-modal="true" aria-labelledby="cloudAuthTitle" onclick="closeCloudAuth(event)">
+  <section class="cloud-auth-sheet">
+    <div class="cloud-auth-head">
+      <div><h2 id="cloudAuthTitle">Đồng bộ dữ liệu</h2><p>Dùng cùng một tài khoản trên iPhone và PC để xem chung một sổ chi phí.</p></div>
+      <button class="install-close" onclick="closeCloudAuth()" aria-label="Đóng">×</button>
+    </div>
+    <div class="cloud-auth-body">
+      <div class="cloud-user-card" id="cloudUserCard">
+        <div class="cloud-user-email" id="cloudUserEmail"></div>
+        <div class="cloud-user-meta">Đã đăng nhập · dữ liệu tự đồng bộ khi có mạng</div>
+        <div class="cloud-user-actions"><button class="btn btn-primary" type="button" onclick="syncWithServer();closeCloudAuth()">Đồng bộ ngay</button><button class="btn btn-ghost" type="button" onclick="cloudSignOut()">Đăng xuất</button></div>
+      </div>
+      <div id="cloudLoginForm">
+        <div class="cloud-auth-fields">
+          <div class="cloud-auth-field"><label for="cloudEmail">Email</label><input type="email" id="cloudEmail" autocomplete="username" placeholder="ten@congty.com"></div>
+          <div class="cloud-auth-field"><label for="cloudPassword">Mật khẩu</label><input type="password" id="cloudPassword" autocomplete="current-password" minlength="6" placeholder="Tối thiểu 6 ký tự"></div>
+        </div>
+        <div class="cloud-auth-actions"><button class="btn btn-primary" type="button" onclick="cloudAuthenticate('login')">Đăng nhập</button><button class="btn btn-ghost" type="button" onclick="cloudAuthenticate('signup')">Tạo tài khoản</button></div>
+        <div class="cloud-auth-message" id="cloudAuthMessage" aria-live="polite"></div>
+        <p class="cloud-auth-note">Lần đầu sử dụng, chọn “Tạo tài khoản”. Nếu Supabase yêu cầu xác nhận, hãy mở email xác nhận rồi quay lại đăng nhập.</p>
+      </div>
+    </div>
+  </section>
+</div>
+
 <div class="install-overlay" id="installOverlay" role="dialog" aria-modal="true" aria-labelledby="installTitle" onclick="closeInstallGuide(event)">
   <section class="install-sheet">
     <div class="install-sheet-head">
@@ -924,9 +973,15 @@ const LOCAL_CACHE_KEY = 'factory_expenses_device_cache_v2';
 const SYNC_QUEUE_KEY = 'factory_expenses_sync_queue_v2';
 const DEVICE_KEY = 'factory_expenses_device_id_v1';
 const CATEGORY_MEMORY_KEY = 'factory_expenses_category_memory_v1';
+const CLOUD_SESSION_KEY = 'factory_expenses_supabase_session_v1';
+const CLOUD_MIGRATION_KEY = 'factory_expenses_cloud_migration_v1';
 const LEDGER_API = '/api/ledger';
+const SUPABASE_URL = 'https://zaocouxrfjyljpofzsau.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_GDjiQW0YvOA82_xivi6QAA_MctVduYc';
 const HAS_CLOUD_API = location.hostname.endsWith('.chatgpt.site');
-const IS_DEVICE_ONLY = location.protocol === 'file:' || !HAS_CLOUD_API;
+const HAS_SUPABASE = /^https:\/\/.+\.supabase\.co$/i.test(SUPABASE_URL) && SUPABASE_PUBLISHABLE_KEY.startsWith('sb_publishable_');
+const CLOUD_PROVIDER = HAS_CLOUD_API ? 'sites' : (HAS_SUPABASE ? 'supabase' : 'device');
+const IS_DEVICE_ONLY = CLOUD_PROVIDER === 'device';
 const REPORT_META = Object.freeze({
   company: 'CÔNG TY TNHH CÔNG NGHỆ SINH HỌC SÀI GÒN XANH',
   factory: 'NHÀ MÁY XỬ LÝ CHẤT THẢI RẮN LIÊN ĐẦM',
@@ -942,6 +997,7 @@ let reportSettings = {advance: 0};
 let categoryMemory = {groups:[],costGroups:[],details:[],relations:[]};
 let syncPromise = null;
 let syncLifecycleStarted = false;
+let cloudSession = null;
 
 function fmt(n){
   n = Number(n)||0;
@@ -1274,6 +1330,25 @@ function uniqueCategories(values){
   });
 }
 
+function mergeCategoryMemories(...sources){
+  const valid = sources.filter(source=>source && typeof source==='object');
+  const relations = valid.flatMap(source=>Array.isArray(source.relations)?source.relations:[])
+    .filter(item=>item && (item.group||item.costGroup||item.detail))
+    .sort((a,b)=>String(b.lastUsed||'').localeCompare(String(a.lastUsed||'')));
+  const seenRelations = new Set();
+  return {
+    groups:uniqueCategories(valid.flatMap(source=>source.groups||[])),
+    costGroups:uniqueCategories(valid.flatMap(source=>source.costGroups||[])),
+    details:uniqueCategories(valid.flatMap(source=>source.details||[])),
+    relations:relations.filter(item=>{
+      const key=[item.group,item.costGroup,item.detail].map(categoryKey).join('|');
+      if(seenRelations.has(key)) return false;
+      seenRelations.add(key);
+      return true;
+    })
+  };
+}
+
 function loadCategoryMemory(){
   const saved = readLocalJson(CATEGORY_MEMORY_KEY,{});
   categoryMemory = {
@@ -1301,7 +1376,10 @@ function rememberEntryCategories(entry,persist=true){
       ...categoryMemory.relations.filter(item=>[item.group,item.costGroup,item.detail].map(categoryKey).join('|')!==relationKey)
     ];
   }
-  if(persist) writeLocalJson(CATEGORY_MEMORY_KEY,categoryMemory);
+  if(persist){
+    writeLocalJson(CATEGORY_MEMORY_KEY,categoryMemory);
+    queueOperation({type:'setting',key:'categories',value:categoryMemory});
+  }
 }
 
 function rememberedValues(type){
@@ -1349,6 +1427,217 @@ function refreshCategorySuggestions(){
   renderRememberedField('dl_nhom','suggest_nhom','f_nhom',rememberedValues('groups'));
   renderRememberedField('dl_hp','suggest_hp','f_hp',rememberedValues('costGroups'));
   renderRememberedField('dl_ct','suggest_ct','f_ct',rememberedValues('details'));
+}
+
+function normalizeCloudSession(session){
+  if(!session?.access_token) return null;
+  return {
+    ...session,
+    expires_at:Number(session.expires_at)||Math.floor(Date.now()/1000)+(Number(session.expires_in)||3600)
+  };
+}
+
+function saveCloudSession(session){
+  cloudSession = normalizeCloudSession(session);
+  if(cloudSession) writeLocalJson(CLOUD_SESSION_KEY,cloudSession);
+  else try{ localStorage.removeItem(CLOUD_SESSION_KEY); }catch(ignore){}
+  updateCloudAccountUi();
+}
+
+function cloudErrorMessage(error){
+  const message=String(error?.message||error||'').toLowerCase();
+  if(message.includes('invalid login')) return 'Email hoặc mật khẩu chưa đúng.';
+  if(message.includes('email not confirmed')) return 'Hãy mở email xác nhận tài khoản rồi đăng nhập lại.';
+  if(message.includes('already registered') || message.includes('already been registered')) return 'Email này đã có tài khoản. Hãy chọn Đăng nhập.';
+  if(message.includes('password')) return 'Mật khẩu cần có ít nhất 6 ký tự.';
+  if(message.includes('ledger_entries') || message.includes('ledger_state')) return 'Supabase chưa có bảng dữ liệu. Hãy chạy tệp supabase/setup.sql một lần.';
+  return navigator.onLine ? (error?.message||'Không kết nối được dịch vụ đồng bộ.') : 'Thiết bị đang ngoại tuyến.';
+}
+
+async function supabaseAuthRequest(path,body,accessToken=''){
+  const response=await fetch(`${SUPABASE_URL}/auth/v1/${path}`,{
+    method:'POST',
+    headers:{
+      'apikey':SUPABASE_PUBLISHABLE_KEY,
+      'Content-Type':'application/json',
+      ...(accessToken?{'Authorization':`Bearer ${accessToken}`}:{})
+    },
+    body:JSON.stringify(body||{})
+  });
+  const text=await response.text();
+  let data={};
+  try{ data=text?JSON.parse(text):{}; }catch(ignore){ data={message:text}; }
+  if(!response.ok) throw new Error(data.msg||data.message||data.error_description||data.error||'Không thể xác thực');
+  return data;
+}
+
+async function refreshCloudSession(){
+  if(!cloudSession?.refresh_token) return null;
+  try{
+    const session=await supabaseAuthRequest('token?grant_type=refresh_token',{refresh_token:cloudSession.refresh_token});
+    saveCloudSession(session);
+    return cloudSession;
+  }catch(error){
+    console.warn('Cloud session expired',error);
+    saveCloudSession(null);
+    return null;
+  }
+}
+
+async function ensureCloudSession(){
+  if(CLOUD_PROVIDER!=='supabase') return cloudSession;
+  if(!cloudSession) cloudSession=normalizeCloudSession(readLocalJson(CLOUD_SESSION_KEY,null));
+  if(!cloudSession) return null;
+  if(Number(cloudSession.expires_at)*1000-Date.now()<60000) return refreshCloudSession();
+  return cloudSession;
+}
+
+async function restoreCloudSession(){
+  if(CLOUD_PROVIDER!=='supabase') return;
+  cloudSession=normalizeCloudSession(readLocalJson(CLOUD_SESSION_KEY,null));
+  if(cloudSession) await ensureCloudSession();
+  updateCloudAccountUi();
+}
+
+function setCloudAuthMessage(message,state=''){
+  const box=document.getElementById('cloudAuthMessage');
+  if(!box) return;
+  box.textContent=message||'';
+  box.className=`cloud-auth-message ${state}`.trim();
+}
+
+function updateCloudAccountUi(){
+  const button=document.getElementById('cloudAccountBtn');
+  const userCard=document.getElementById('cloudUserCard');
+  const loginForm=document.getElementById('cloudLoginForm');
+  const email=cloudSession?.user?.email||'';
+  if(button){
+    button.innerHTML=email?'<b>✓</b><span>Tài khoản</span>':'<b>☁</b><span>Đăng nhập</span>';
+    button.classList.toggle('is-connected',Boolean(email));
+    button.setAttribute('aria-label',email?`Đã đăng nhập ${email}`:'Đăng nhập đồng bộ');
+  }
+  if(userCard) userCard.classList.toggle('show',Boolean(email));
+  if(loginForm) loginForm.hidden=Boolean(email);
+  const emailLabel=document.getElementById('cloudUserEmail');
+  if(emailLabel) emailLabel.textContent=email;
+}
+
+function openCloudAuth(){
+  updateCloudAccountUi();
+  setCloudAuthMessage('');
+  document.getElementById('cloudAuthOverlay')?.classList.add('show');
+  if(!cloudSession) setTimeout(()=>document.getElementById('cloudEmail')?.focus(),100);
+}
+
+function closeCloudAuth(event){
+  const overlay=document.getElementById('cloudAuthOverlay');
+  if(event && event.target!==overlay) return;
+  overlay?.classList.remove('show');
+}
+
+function prepareInitialCloudMigration(){
+  const userId=cloudSession?.user?.id;
+  if(!userId) return;
+  const migrations=readLocalJson(CLOUD_MIGRATION_KEY,{});
+  if(migrations[userId]) return;
+  allEntries.forEach(entry=>queueOperation({type:'upsert',entry,updatedAt:entry.updatedAt||entry.createdAt}));
+  queueOperation({type:'setting',key:'advance',value:Number(reportSettings.advance)||0});
+  queueOperation({type:'setting',key:'categories',value:categoryMemory});
+  migrations[userId]=new Date().toISOString();
+  writeLocalJson(CLOUD_MIGRATION_KEY,migrations);
+}
+
+async function cloudAuthenticate(mode){
+  if(CLOUD_PROVIDER!=='supabase') return;
+  const email=document.getElementById('cloudEmail')?.value.trim();
+  const password=document.getElementById('cloudPassword')?.value||'';
+  if(!email || password.length<6){
+    setCloudAuthMessage('Nhập đúng email và mật khẩu từ 6 ký tự.','error');
+    return;
+  }
+  setCloudAuthMessage(mode==='signup'?'Đang tạo tài khoản…':'Đang đăng nhập…','working');
+  try{
+    const data=await supabaseAuthRequest(mode==='signup'?'signup':'token?grant_type=password',{email,password});
+    if(data.access_token){
+      saveCloudSession(data);
+      prepareInitialCloudMigration();
+      setCloudAuthMessage('Đăng nhập thành công. Đang đồng bộ dữ liệu…','success');
+      await syncWithServer();
+      closeCloudAuth();
+      showToast('Đã bật đồng bộ giữa các thiết bị');
+    }else{
+      setCloudAuthMessage('Đã tạo tài khoản. Hãy mở email xác nhận rồi quay lại đăng nhập.','success');
+    }
+  }catch(error){
+    console.error(error);
+    setCloudAuthMessage(cloudErrorMessage(error),'error');
+  }
+}
+
+async function cloudSignOut(){
+  const token=cloudSession?.access_token;
+  saveCloudSession(null);
+  if(token) supabaseAuthRequest('logout',{},token).catch(()=>{});
+  updateSyncStatus('offline','Đã đăng xuất · dữ liệu mới chỉ lưu trên thiết bị này');
+  updateCloudAccountUi();
+  showToast('Đã đăng xuất đồng bộ');
+}
+
+async function supabaseRestRequest(path,options={},retry=true){
+  const session=await ensureCloudSession();
+  if(!session) throw new Error('Bạn chưa đăng nhập đồng bộ');
+  const response=await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{
+    ...options,
+    headers:{
+      'apikey':SUPABASE_PUBLISHABLE_KEY,
+      'Authorization':`Bearer ${session.access_token}`,
+      'Content-Type':'application/json',
+      ...(options.headers||{})
+    }
+  });
+  if(response.status===401 && retry && await refreshCloudSession()) return supabaseRestRequest(path,options,false);
+  const text=await response.text();
+  let data=null;
+  try{ data=text?JSON.parse(text):null; }catch(ignore){ data=text; }
+  if(!response.ok) throw new Error(data?.message||data?.hint||data?.details||String(data||'Không thể đồng bộ'));
+  return data;
+}
+
+async function syncWithSupabase(operations){
+  const session=await ensureCloudSession();
+  if(!session?.user?.id) throw new Error('Bạn chưa đăng nhập đồng bộ');
+  const ownerId=session.user.id;
+  const entryRows=operations.filter(operation=>operation.type==='upsert'||operation.type==='delete').map(operation=>({
+    owner_id:ownerId,
+    entry_id:operation.entry?.id||operation.id,
+    payload:operation.type==='upsert'?operation.entry:null,
+    deleted:operation.type==='delete',
+    updated_at:operation.updatedAt||new Date().toISOString(),
+    updated_by:getDeviceId()
+  })).filter(row=>row.entry_id);
+  const stateRows=operations.filter(operation=>operation.type==='setting').map(operation=>({
+    owner_id:ownerId,
+    key:operation.key,
+    payload:{value:operation.value},
+    updated_at:operation.updatedAt||new Date().toISOString()
+  }));
+  if(entryRows.length) await supabaseRestRequest('ledger_entries?on_conflict=owner_id,entry_id',{
+    method:'POST',headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(entryRows)
+  });
+  if(stateRows.length) await supabaseRestRequest('ledger_state?on_conflict=owner_id,key',{
+    method:'POST',headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(stateRows)
+  });
+  const ownerFilter=encodeURIComponent(ownerId);
+  const [entryData,stateData]=await Promise.all([
+    supabaseRestRequest(`ledger_entries?select=entry_id,payload,deleted,updated_at&owner_id=eq.${ownerFilter}&order=updated_at.asc`,{cache:'no-store'}),
+    supabaseRestRequest(`ledger_state?select=key,payload,updated_at&owner_id=eq.${ownerFilter}`,{cache:'no-store'})
+  ]);
+  const settings={};
+  (stateData||[]).forEach(row=>{ settings[row.key]=row.payload?.value; });
+  return {
+    entries:(entryData||[]).filter(row=>!row.deleted && row.payload).map(row=>row.payload),
+    settings
+  };
 }
 
 function getDeviceId(){
@@ -1459,8 +1748,8 @@ function applyPendingOperations(entries,settings,operations){
       const index = mergedEntries.findIndex(entry=>entry.id===operation.id);
       if(index>=0) mergedEntries.splice(index,1);
     }
-    if(operation.type==='setting' && operation.key==='advance'){
-      mergedSettings.advance = Number(operation.value)||0;
+    if(operation.type==='setting' && operation.key){
+      mergedSettings[operation.key] = operation.key==='advance' ? Number(operation.value)||0 : operation.value;
     }
   });
   return {entries:mergedEntries,settings:mergedSettings};
@@ -1480,6 +1769,12 @@ async function syncWithServer(){
     updateSyncStatus('synced','Đã lưu tự động trên thiết bị này');
     return;
   }
+  if(CLOUD_PROVIDER==='supabase' && !await ensureCloudSession()){
+    const pending=getPendingOperations().length;
+    updateSyncStatus('offline',`Chưa đăng nhập đồng bộ${pending?` · ${pending} thay đổi đã giữ trên máy`:''}`);
+    updateCloudAccountUi();
+    return;
+  }
   if(!navigator.onLine){
     const pending = getPendingOperations().length;
     updateSyncStatus('offline',`Ngoại tuyến${pending?` · ${pending} thay đổi chờ đồng bộ`:''}`);
@@ -1490,13 +1785,18 @@ async function syncWithServer(){
     const sentOperations = getPendingOperations();
     updateSyncStatus('syncing',sentOperations.length?'Đang lưu thay đổi…':'Đang kiểm tra dữ liệu mới…');
     try{
-      const response = await fetch(LEDGER_API,sentOperations.length?{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({operations:sentOperations})
-      }:{cache:'no-store'});
-      const snapshot = await response.json();
-      if(!response.ok) throw new Error(snapshot.error||'Không thể đồng bộ');
+      let snapshot;
+      if(CLOUD_PROVIDER==='supabase'){
+        snapshot=await syncWithSupabase(sentOperations);
+      }else{
+        const response = await fetch(LEDGER_API,sentOperations.length?{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({operations:sentOperations})
+        }:{cache:'no-store'});
+        snapshot = await response.json();
+        if(!response.ok) throw new Error(snapshot.error||'Không thể đồng bộ');
+      }
 
       if(sentOperations.length){
         const sentIds = new Set(sentOperations.map(operation=>operation.opId));
@@ -1507,6 +1807,11 @@ async function syncWithServer(){
       const merged = applyPendingOperations(snapshot.entries,snapshot.settings,remaining);
       allEntries = merged.entries;
       reportSettings = {advance:Number(merged.settings?.advance)||0};
+      if(merged.settings?.categories){
+        categoryMemory=mergeCategoryMemories(merged.settings.categories,categoryMemory);
+        writeLocalJson(CATEGORY_MEMORY_KEY,categoryMemory);
+        refreshCategorySuggestions();
+      }
       cacheDeviceState();
 
       const advanceInput = document.getElementById('reportAdvance');
@@ -1519,7 +1824,7 @@ async function syncWithServer(){
     }catch(error){
       console.error(error);
       const pending = getPendingOperations().length;
-      updateSyncStatus('offline',`Chưa thể đồng bộ${pending?` · ${pending} thay đổi đã giữ trên máy`:''}`);
+      updateSyncStatus('offline',`${cloudErrorMessage(error)}${pending?` · ${pending} thay đổi đã giữ trên máy`:''}`);
     }
   })();
 
@@ -1568,7 +1873,7 @@ function startSyncLifecycle(){
   });
   setInterval(()=>{
     if(document.visibilityState==='visible') syncWithServer();
-  },15000);
+  },10000);
   if('serviceWorker' in navigator && location.protocol === 'https:'){
     navigator.serviceWorker.register('./sw.js').catch(()=>{});
   }
@@ -1630,6 +1935,8 @@ async function loadData(){
   document.getElementById('reportAdvance').value = reportSettings.advance ? fmt(reportSettings.advance) : '';
   cacheDeviceState();
   render();
+  await restoreCloudSession();
+  prepareInitialCloudMigration();
   startSyncLifecycle();
   await syncWithServer();
 }
