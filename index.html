@@ -491,8 +491,13 @@
   .image-import-icon{width:42px;height:42px;flex:0 0 auto;border-radius:12px;display:grid;place-items:center;background:#DDF3ED;color:#08715D;font-size:21px}
   .image-import-title{font-size:13px;font-weight:800;color:#173A34}
   .image-import-note{margin-top:3px;color:#70817E;font-size:11px}
+  .ocr-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
   .ocr-button{min-height:42px;padding:9px 13px;border:1px solid #9ED1C5;border-radius:10px;background:#fff;color:#08715D;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap}
   .ocr-button:hover{background:#EAF8F4}
+  .ocr-button.primary{background:#08715D;border-color:#08715D;color:#fff}
+  .ocr-button.primary:hover{background:#075C4C}
+  .paste-image-zone{display:flex;align-items:center;justify-content:center;gap:7px;min-height:40px;margin-top:12px;padding:9px 12px;border:1px dashed #9FCFC3;border-radius:10px;background:rgba(255,255,255,.72);color:#426A62;font-size:11px;font-weight:700;cursor:pointer}
+  .paste-image-zone:focus{outline:3px solid #D8EEE8;outline-offset:2px}
   .ocr-workspace{display:none;margin-top:14px;padding-top:14px;border-top:1px solid #D9E9E5}
   .ocr-workspace.show{display:grid;grid-template-columns:116px 1fr;gap:14px;align-items:start}
   .ocr-preview{width:116px;height:86px;border:1px solid #C9D8D5;border-radius:10px;background:#fff;object-fit:cover}
@@ -506,6 +511,10 @@
   .ocr-result.show{display:block}
   .ocr-result strong{color:#08715D}
   .ocr-result.error{border-color:#F0C6CE;background:#FFF7F8;color:#A52D43}
+  .memory-suggestions{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px;min-height:0}
+  .memory-chip{padding:4px 8px;border:1px solid #D5E2E8;border-radius:999px;background:#fff;color:#526675;font-size:10px;font-weight:700;cursor:pointer}
+  .memory-chip:hover{border-color:#80B5A9;background:#F1F9F7;color:#08715D}
+  .memory-chip-label{display:inline-flex;align-items:center;color:#84929D;font-size:10px}
   .formgrid{gap:16px}
   .field label{margin-bottom:7px;font:800 10px/1.2 Inter,Arial,sans-serif;color:#6B7988;letter-spacing:.65px;text-transform:uppercase}
   .field input,.field select{min-height:46px;padding:10px 12px;border:1px solid #D7E0E7;border-radius:10px;background:#F9FBFC;color:var(--text);font:500 14px/1.2 Inter,Arial,sans-serif;outline:none}
@@ -531,11 +540,37 @@
   .install-steps strong{color:var(--navy)}
   .install-tip{margin:0 22px 20px;padding:11px 13px;border-radius:11px;background:#FFF5E4;color:#80530E;font-size:11px;line-height:1.45}
   .install-actions{display:flex;justify-content:flex-end;padding:0 22px 22px}
+  .analytics-card{margin:0 0 20px;padding:22px;border:1px solid var(--line);border-radius:18px;background:#fff;box-shadow:var(--shadow)}
+  .analytics-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:18px}
+  .analytics-title{margin:0;color:var(--navy);font-size:20px;line-height:1.2}
+  .analytics-subtitle{margin:5px 0 0;color:var(--muted);font-size:12px}
+  .analytics-filters{display:grid;grid-template-columns:repeat(6,minmax(120px,1fr));gap:10px;align-items:end;margin-bottom:18px;padding:14px;border-radius:14px;background:#F7F9FB}
+  .analytics-control{display:flex;flex-direction:column;gap:6px;min-width:0}
+  .analytics-control label{color:var(--muted);font-size:9px;font-weight:800;letter-spacing:.7px;text-transform:uppercase}
+  .analytics-control input,.analytics-control select{width:100%;height:40px;padding:0 10px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--text);font-size:12px;outline:none}
+  .analytics-control input:focus,.analytics-control select:focus{border-color:#68A8D3;box-shadow:0 0 0 3px #E6F2FA}
+  .analytics-period-fields{display:contents}
+  .analytics-period-fields[hidden],.analytics-control[hidden]{display:none!important}
+  .analytics-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:18px}
+  .analytics-stat{padding:14px;border:1px solid #E1E8ED;border-radius:12px;background:#FBFCFD}
+  .analytics-stat span{display:block;color:var(--muted);font-size:9px;font-weight:800;letter-spacing:.65px;text-transform:uppercase}
+  .analytics-stat strong{display:block;margin-top:6px;color:var(--navy);font-size:18px;line-height:1.15;font-variant-numeric:tabular-nums}
+  .analytics-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .chart-block{min-width:0;padding:16px;border:1px solid #E4EAEE;border-radius:14px}
+  .chart-block h3{margin:0 0 13px;color:#405464;font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase}
+  .bar-chart{display:grid;gap:9px}
+  .bar-row{display:grid;grid-template-columns:minmax(72px,120px) minmax(80px,1fr) auto;gap:9px;align-items:center;min-width:0}
+  .bar-label{overflow:hidden;color:#526473;font-size:10px;font-weight:700;text-overflow:ellipsis;white-space:nowrap}
+  .bar-track{height:9px;overflow:hidden;border-radius:999px;background:#E8EEF2}
+  .bar-fill{height:100%;min-width:2px;border-radius:inherit;background:var(--bar-color,#178E78)}
+  .bar-value{color:#243746;font-size:10px;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .chart-empty{padding:20px 8px;color:#86929C;font-size:11px;text-align:center}
   .fab{display:none}
   @media(max-width:980px){
     .kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
     .toolbar{grid-template-columns:1fr 1fr}
     .search-control{grid-column:1/-1}
+    .analytics-filters{grid-template-columns:repeat(3,minmax(0,1fr))}
   }
   @media(max-width:720px){
     .appbar{height:66px;padding:0 14px;gap:10px}
@@ -574,7 +609,9 @@
     .modal-head{padding:18px}
     .modal-body{padding:18px 16px 4px}
     .image-import-head{align-items:stretch;flex-direction:column}
+    .ocr-actions{display:grid;grid-template-columns:1fr 1fr}
     .ocr-button{width:100%}
+    .paste-action{grid-column:1/-1}
     .ocr-workspace.show{grid-template-columns:86px 1fr}
     .ocr-preview{width:86px;height:76px}
     .formgrid{grid-template-columns:1fr}
@@ -583,7 +620,15 @@
     .fab{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom));z-index:35;display:grid;place-items:center;width:58px;height:58px;border:0;border-radius:18px;background:linear-gradient(145deg,#17A88B,#08725F);color:#fff;font-size:30px;box-shadow:0 14px 30px rgba(8,114,95,.36);cursor:pointer}
     .install-overlay{align-items:flex-end;padding:0}
     .install-sheet{width:100%;border-radius:22px 22px 0 0;padding-bottom:env(safe-area-inset-bottom)}
+    .analytics-card{padding:16px;border-radius:15px}
+    .analytics-head{display:block}
+    .analytics-filters{grid-template-columns:1fr 1fr;padding:12px}
+    .analytics-summary{grid-template-columns:1fr 1fr}
+    .analytics-stat strong{font-size:15px}
+    .analytics-grid{grid-template-columns:1fr}
+    .bar-row{grid-template-columns:minmax(70px,95px) minmax(60px,1fr) auto}
   }
+  @media(pointer:coarse){.paste-action{display:none}.paste-image-zone{display:none}}
 </style>
 </head>
 <body>
@@ -642,6 +687,50 @@
         <strong class="kpi-value" id="kpiBalance">0 đ</strong>
         <span class="kpi-meta" id="kpiBalanceMeta">Ứng quỹ trừ tổng chi</span>
       </article>
+    </section>
+
+    <section class="analytics-card" aria-labelledby="analyticsTitle">
+      <div class="analytics-head">
+        <div>
+          <h2 class="analytics-title" id="analyticsTitle">Thống kê báo cáo chi phí</h2>
+          <p class="analytics-subtitle">Phân tích theo thời gian, nhóm chi phí và trạng thái VAT.</p>
+        </div>
+        <button class="btn btn-ghost" type="button" onclick="resetAnalyticsFilters()">Đặt lại thống kê</button>
+      </div>
+      <div class="analytics-filters">
+        <div class="analytics-control">
+          <label for="statsPeriodMode">Kỳ thống kê</label>
+          <select id="statsPeriodMode" onchange="updateAnalyticsPeriodFields();renderAnalytics()">
+            <option value="range">Từ ngày đến ngày</option>
+            <option value="month">Theo tháng</option>
+            <option value="year">Theo năm</option>
+          </select>
+        </div>
+        <div class="analytics-period-fields" id="statsRangeFields">
+          <div class="analytics-control"><label for="statsFromDate">Từ ngày</label><input type="date" id="statsFromDate"></div>
+          <div class="analytics-control"><label for="statsToDate">Đến ngày</label><input type="date" id="statsToDate"></div>
+        </div>
+        <div class="analytics-control" id="statsMonthField" hidden><label for="statsMonth">Tháng</label><input type="month" id="statsMonth"></div>
+        <div class="analytics-control" id="statsYearField" hidden><label for="statsYear">Năm</label><input type="number" min="2000" max="2200" step="1" id="statsYear"></div>
+        <div class="analytics-control"><label for="statsGroup">Theo nhóm</label><select id="statsGroup"><option value="">Tất cả nhóm</option></select></div>
+        <div class="analytics-control"><label for="statsCostGroup">Theo nhóm hao phí</label><select id="statsCostGroup"><option value="">Tất cả nhóm hao phí</option></select></div>
+        <div class="analytics-control">
+          <label for="statsVat">Thuế VAT</label>
+          <select id="statsVat"><option value="all">Tất cả</option><option value="vat">Có VAT</option><option value="novat">Không VAT</option></select>
+        </div>
+      </div>
+      <div class="analytics-summary" aria-live="polite">
+        <div class="analytics-stat"><span>Tổng chi sau thuế</span><strong id="statsTotal">0 đ</strong></div>
+        <div class="analytics-stat"><span>Số khoản chi</span><strong id="statsCount">0</strong></div>
+        <div class="analytics-stat"><span>Bình quân/khoản</span><strong id="statsAverage">0 đ</strong></div>
+        <div class="analytics-stat"><span>Tổng VAT</span><strong id="statsVatTotal">0 đ</strong></div>
+      </div>
+      <div class="analytics-grid">
+        <section class="chart-block"><h3>Chi phí theo thời gian</h3><div class="bar-chart" id="statsTimeChart"></div></section>
+        <section class="chart-block"><h3>Chi phí theo nhóm</h3><div class="bar-chart" id="statsGroupChart"></div></section>
+        <section class="chart-block"><h3>Chi phí theo nhóm hao phí</h3><div class="bar-chart" id="statsCostGroupChart"></div></section>
+        <section class="chart-block"><h3>Có VAT / Không VAT</h3><div class="bar-chart" id="statsVatChart"></div></section>
+      </div>
     </section>
 
     <section class="content-card">
@@ -709,9 +798,15 @@
               <div class="image-import-note">Đọc ảnh ngay trên thiết bị · bạn vẫn có thể kiểm tra và sửa trước khi lưu</div>
             </div>
           </div>
-          <button type="button" class="ocr-button" onclick="document.getElementById('receiptImageInput').click()">Chụp / Chọn ảnh</button>
-          <input type="file" id="receiptImageInput" accept="image/*" capture="environment" hidden onchange="handleReceiptImage(this)">
+          <div class="ocr-actions">
+            <button type="button" class="ocr-button primary" onclick="document.getElementById('receiptCameraInput').click()">▣ Chụp ảnh</button>
+            <button type="button" class="ocr-button" onclick="document.getElementById('receiptUploadInput').click()">↑ Tải ảnh</button>
+            <button type="button" class="ocr-button paste-action" onclick="pasteReceiptImage()">⌘ Dán ảnh</button>
+          </div>
+          <input type="file" id="receiptCameraInput" accept="image/*" capture="environment" hidden onchange="handleReceiptImage(this)">
+          <input type="file" id="receiptUploadInput" accept="image/*" hidden onchange="handleReceiptImage(this)">
         </div>
+        <div class="paste-image-zone paste-action" id="pasteImageZone" role="button" aria-label="Dán ảnh chứng từ từ bộ nhớ tạm" onclick="pasteReceiptImage()">Nhấn Ctrl+V hoặc bấm vào đây để dán ảnh chụp màn hình trên PC</div>
         <div class="ocr-workspace" id="ocrWorkspace">
           <img class="ocr-preview" id="ocrPreview" alt="Ảnh chứng từ đã chọn">
           <div class="ocr-status">
@@ -735,16 +830,19 @@
           <option>Nhiên liệu</option><option>Nhân công</option><option>Vật tư</option>
           <option>Sửa chữa</option><option>Điện nước</option><option>Văn phòng phẩm</option><option>Khác</option>
         </datalist>
+        <div class="memory-suggestions" id="suggest_nhom"></div>
       </div>
       <div class="field">
         <label>Nhóm hao phí</label>
         <input list="dl_hp" id="f_hp" placeholder="VD: Xe">
         <datalist id="dl_hp"><option>Xe</option><option>Máy móc</option><option>Nhà xưởng</option><option>Con người</option></datalist>
+        <div class="memory-suggestions" id="suggest_hp"></div>
       </div>
       <div class="field">
         <label>Chi tiết nhóm</label>
         <input list="dl_ct" id="f_ct" placeholder="VD: xe cơ giới">
         <datalist id="dl_ct"><option>xe cơ giới</option><option>xe tải</option><option>máy xúc lật</option></datalist>
+        <div class="memory-suggestions" id="suggest_ct"></div>
       </div>
       <div class="field full">
         <label>Chi phí (nội dung)</label>
@@ -825,6 +923,7 @@ const REPORT_SETTINGS_KEY = 'factory_expenses_report_settings_v1';
 const LOCAL_CACHE_KEY = 'factory_expenses_device_cache_v2';
 const SYNC_QUEUE_KEY = 'factory_expenses_sync_queue_v2';
 const DEVICE_KEY = 'factory_expenses_device_id_v1';
+const CATEGORY_MEMORY_KEY = 'factory_expenses_category_memory_v1';
 const LEDGER_API = '/api/ledger';
 const HAS_CLOUD_API = location.hostname.endsWith('.chatgpt.site');
 const IS_DEVICE_ONLY = location.protocol === 'file:' || !HAS_CLOUD_API;
@@ -840,6 +939,7 @@ const REPORT_META = Object.freeze({
 let allEntries = [];
 let currentTab = 'tong';
 let reportSettings = {advance: 0};
+let categoryMemory = {groups:[],costGroups:[],details:[],relations:[]};
 let syncPromise = null;
 let syncLifecycleStarted = false;
 
@@ -902,11 +1002,13 @@ function setOcrProgress(message,progress=0){
 function resetOcrPanel(){
   const workspace = document.getElementById('ocrWorkspace');
   const result = document.getElementById('ocrResult');
-  const input = document.getElementById('receiptImageInput');
   workspace.classList.remove('show');
   result.className = 'ocr-result';
   result.textContent = '';
-  input.value = '';
+  ['receiptCameraInput','receiptUploadInput'].forEach(id=>{
+    const input = document.getElementById(id);
+    if(input) input.value = '';
+  });
   setOcrProgress('Đang chuẩn bị đọc ảnh…',0);
   if(ocrPreviewUrl){
     URL.revokeObjectURL(ocrPreviewUrl);
@@ -1042,6 +1144,7 @@ function applyReceiptData(data){
   document.getElementById('f_hasvat').checked = data.hasVat;
   document.getElementById('f_vatrate').value = data.hasVat && data.vatRate ? Number(data.vatRate.toFixed(2)) : '';
   document.getElementById('f_vatamt').value = data.hasVat && data.vatAmount ? Number(data.vatAmount.toFixed(2)) : '';
+  refreshCategorySuggestions();
   toggleVatFields();
   updatePreview('base');
 
@@ -1050,8 +1153,7 @@ function applyReceiptData(data){
   result.innerHTML = `<strong>Đã điền ${data.confidence}%:</strong> ${esc(data.name)} · ${fmt(data.quantity)} ${esc(data.unit)} × ${fmt(data.unitPrice)} đ = ${fmt(data.lineTotal)} đ${data.hasVat?` · VAT ${fmt(data.vatRate)}%`:' · Không VAT'}`;
 }
 
-async function handleReceiptImage(input){
-  const file = input.files?.[0];
+async function processReceiptImage(file){
   if(!file) return;
   const workspace = document.getElementById('ocrWorkspace');
   const resultBox = document.getElementById('ocrResult');
@@ -1095,9 +1197,46 @@ async function handleReceiptImage(input){
       : 'Cần kết nối Internet trong lần đầu tải bộ đọc ảnh. Ảnh vẫn được xử lý trên thiết bị.';
   }finally{
     if(worker) await worker.terminate().catch(()=>{});
-    input.value = '';
   }
 }
+
+async function handleReceiptImage(input){
+  const file = input.files?.[0];
+  if(file) await processReceiptImage(file);
+  input.value = '';
+}
+
+async function pasteReceiptImage(){
+  if(!navigator.clipboard?.read){
+    showToast('Hãy nhấn Ctrl+V để dán ảnh chụp màn hình');
+    document.getElementById('pasteImageZone')?.focus();
+    return;
+  }
+  try{
+    const items = await navigator.clipboard.read();
+    for(const item of items){
+      const imageType = item.types.find(type=>type.startsWith('image/'));
+      if(!imageType) continue;
+      const blob = await item.getType(imageType);
+      await processReceiptImage(new File([blob],`anh-chung-tu-${Date.now()}.png`,{type:imageType}));
+      return;
+    }
+    showToast('Bộ nhớ tạm chưa có hình ảnh');
+  }catch(error){
+    console.warn(error);
+    showToast('Nhấn Ctrl+V để dán ảnh trực tiếp');
+    document.getElementById('pasteImageZone')?.focus();
+  }
+}
+
+document.addEventListener('paste',event=>{
+  if(!document.getElementById('overlay')?.classList.contains('show')) return;
+  const item = [...(event.clipboardData?.items||[])].find(candidate=>candidate.type.startsWith('image/'));
+  const file = item?.getAsFile();
+  if(!file) return;
+  event.preventDefault();
+  processReceiptImage(file);
+});
 
 function formatAdvanceTyping(input){
   formatCurrencyTyping(input);
@@ -1121,6 +1260,95 @@ function readLocalJson(key,fallback){
 
 function writeLocalJson(key,value){
   try{ localStorage.setItem(key,JSON.stringify(value)); }catch(ignore){}
+}
+
+function cleanCategory(value){ return String(value||'').trim().replace(/\s+/g,' '); }
+function categoryKey(value){ return cleanCategory(value).toLocaleLowerCase('vi'); }
+function uniqueCategories(values){
+  const seen = new Set();
+  return values.map(cleanCategory).filter(value=>{
+    const key = categoryKey(value);
+    if(!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function loadCategoryMemory(){
+  const saved = readLocalJson(CATEGORY_MEMORY_KEY,{});
+  categoryMemory = {
+    groups: uniqueCategories([...(saved.groups||[]),'Nhiên liệu','Nhân công','Vật tư','Sửa chữa','Điện nước','Văn phòng phẩm','Khác']),
+    costGroups: uniqueCategories([...(saved.costGroups||[]),'Xe','Máy móc','Nhà xưởng','Con người']),
+    details: uniqueCategories([...(saved.details||[]),'xe cơ giới','xe tải','máy xúc lật']),
+    relations: Array.isArray(saved.relations) ? saved.relations.filter(item=>item && (item.group||item.costGroup||item.detail)) : []
+  };
+  allEntries.forEach(entry=>rememberEntryCategories(entry,false));
+  writeLocalJson(CATEGORY_MEMORY_KEY,categoryMemory);
+  refreshCategorySuggestions();
+}
+
+function rememberEntryCategories(entry,persist=true){
+  const group = cleanCategory(entry.nhom);
+  const costGroup = cleanCategory(entry.hp);
+  const detail = cleanCategory(entry.ct);
+  categoryMemory.groups = uniqueCategories([group,...categoryMemory.groups]);
+  categoryMemory.costGroups = uniqueCategories([costGroup,...categoryMemory.costGroups]);
+  categoryMemory.details = uniqueCategories([detail,...categoryMemory.details]);
+  if(group || costGroup || detail){
+    const relationKey = [group,costGroup,detail].map(categoryKey).join('|');
+    categoryMemory.relations = [
+      {group,costGroup,detail,lastUsed:new Date().toISOString()},
+      ...categoryMemory.relations.filter(item=>[item.group,item.costGroup,item.detail].map(categoryKey).join('|')!==relationKey)
+    ];
+  }
+  if(persist) writeLocalJson(CATEGORY_MEMORY_KEY,categoryMemory);
+}
+
+function rememberedValues(type){
+  const group = categoryKey(document.getElementById('f_nhom')?.value);
+  const costGroup = categoryKey(document.getElementById('f_hp')?.value);
+  if(type==='groups') return categoryMemory.groups;
+  if(type==='costGroups'){
+    const related = categoryMemory.relations.filter(item=>!group || categoryKey(item.group)===group).map(item=>item.costGroup);
+    return uniqueCategories([...related,...categoryMemory.costGroups]);
+  }
+  const related = categoryMemory.relations.filter(item=>(!group || categoryKey(item.group)===group) && (!costGroup || categoryKey(item.costGroup)===costGroup)).map(item=>item.detail);
+  return uniqueCategories([...related,...categoryMemory.details]);
+}
+
+function renderRememberedField(listId,containerId,fieldId,values){
+  const list = document.getElementById(listId);
+  const container = document.getElementById(containerId);
+  if(!list || !container) return;
+  list.replaceChildren(...values.map(value=>{
+    const option = document.createElement('option');
+    option.value = value;
+    return option;
+  }));
+  container.replaceChildren();
+  const visible = values.slice(0,5);
+  if(!visible.length) return;
+  const label = document.createElement('span');
+  label.className = 'memory-chip-label';
+  label.textContent = 'Đã nhớ:';
+  container.appendChild(label);
+  visible.forEach(value=>{
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'memory-chip';
+    button.textContent = value;
+    button.addEventListener('click',()=>{
+      document.getElementById(fieldId).value = value;
+      refreshCategorySuggestions();
+    });
+    container.appendChild(button);
+  });
+}
+
+function refreshCategorySuggestions(){
+  renderRememberedField('dl_nhom','suggest_nhom','f_nhom',rememberedValues('groups'));
+  renderRememberedField('dl_hp','suggest_hp','f_hp',rememberedValues('costGroups'));
+  renderRememberedField('dl_ct','suggest_ct','f_ct',rememberedValues('details'));
 }
 
 function getDeviceId(){
@@ -1395,6 +1623,10 @@ async function loadData(){
   }else{
     loadLegacyDeviceData();
   }
+  document.getElementById('statsMonth').value = new Date().toISOString().slice(0,7);
+  document.getElementById('statsYear').value = new Date().getFullYear();
+  loadCategoryMemory();
+  updateAnalyticsPeriodFields();
   document.getElementById('reportAdvance').value = reportSettings.advance ? fmt(reportSettings.advance) : '';
   cacheDeviceState();
   render();
@@ -1434,6 +1666,11 @@ function clearFilter(){
 document.getElementById('fromDate').addEventListener('change', render);
 document.getElementById('toDate').addEventListener('change', render);
 document.getElementById('searchInput').addEventListener('input', render);
+['statsFromDate','statsToDate','statsMonth','statsYear','statsCostGroup','statsVat'].forEach(id=>document.getElementById(id).addEventListener('change',renderAnalytics));
+document.getElementById('statsGroup').addEventListener('change',()=>{ refreshAnalyticsOptions(); renderAnalytics(); });
+document.getElementById('f_nhom').addEventListener('input',refreshCategorySuggestions);
+document.getElementById('f_hp').addEventListener('input',refreshCategorySuggestions);
+document.getElementById('f_ct').addEventListener('focus',refreshCategorySuggestions);
 
 function getFiltered(){
   const from = parseYMD(document.getElementById('fromDate').value);
@@ -1450,6 +1687,141 @@ function getFiltered(){
     if(to && d > to) return false;
     return true;
   }).sort((a,b)=> (a.date||'').localeCompare(b.date||''));
+}
+
+function updateAnalyticsPeriodFields(){
+  const mode = document.getElementById('statsPeriodMode').value;
+  document.getElementById('statsRangeFields').hidden = mode!=='range';
+  document.getElementById('statsMonthField').hidden = mode!=='month';
+  document.getElementById('statsYearField').hidden = mode!=='year';
+}
+
+function setSelectValues(id,placeholder,values){
+  const select = document.getElementById(id);
+  const current = select.value;
+  select.replaceChildren();
+  const first = document.createElement('option');
+  first.value = '';
+  first.textContent = placeholder;
+  select.appendChild(first);
+  uniqueCategories(values).sort((a,b)=>a.localeCompare(b,'vi')).forEach(value=>{
+    const option = document.createElement('option');
+    option.value = value;
+    option.textContent = value;
+    select.appendChild(option);
+  });
+  if([...select.options].some(option=>option.value===current)) select.value = current;
+}
+
+function refreshAnalyticsOptions(){
+  setSelectValues('statsGroup','Tất cả nhóm',[...categoryMemory.groups,...allEntries.map(entry=>entry.nhom)]);
+  const selectedGroup = categoryKey(document.getElementById('statsGroup').value);
+  const costGroups = selectedGroup
+    ? allEntries.filter(entry=>categoryKey(entry.nhom)===selectedGroup).map(entry=>entry.hp)
+    : [...categoryMemory.costGroups,...allEntries.map(entry=>entry.hp)];
+  setSelectValues('statsCostGroup','Tất cả nhóm hao phí',costGroups);
+}
+
+function getAnalyticsEntries(){
+  const mode = document.getElementById('statsPeriodMode').value;
+  const from = document.getElementById('statsFromDate').value;
+  const to = document.getElementById('statsToDate').value;
+  const month = document.getElementById('statsMonth').value;
+  const year = String(document.getElementById('statsYear').value||'').trim();
+  const group = categoryKey(document.getElementById('statsGroup').value);
+  const costGroup = categoryKey(document.getElementById('statsCostGroup').value);
+  const vat = document.getElementById('statsVat').value;
+  return allEntries.filter(entry=>{
+    const date = String(entry.date||'').slice(0,10);
+    if(mode==='range'){
+      if(from && (!date || date<from)) return false;
+      if(to && (!date || date>to)) return false;
+    }
+    if(mode==='month' && month && !date.startsWith(`${month}-`)) return false;
+    if(mode==='year' && year && !date.startsWith(`${year}-`)) return false;
+    if(group && categoryKey(entry.nhom)!==group) return false;
+    if(costGroup && categoryKey(entry.hp)!==costGroup) return false;
+    if(vat==='vat' && !entry.hasVat) return false;
+    if(vat==='novat' && entry.hasVat) return false;
+    return true;
+  }).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+}
+
+function aggregateExpenses(entries,keyFor,labelFor){
+  const groups = new Map();
+  entries.forEach(entry=>{
+    const key = keyFor(entry) || 'Chưa phân loại';
+    const current = groups.get(key)||{key,label:labelFor(entry)||key,value:0,count:0};
+    current.value += entryAmounts(entry).afterTax;
+    current.count += 1;
+    groups.set(key,current);
+  });
+  return [...groups.values()];
+}
+
+function compactChartItems(items,limit=10){
+  if(items.length<=limit) return items;
+  const visible = items.slice(0,limit-1);
+  const rest = items.slice(limit-1).reduce((sum,item)=>sum+item.value,0);
+  return [...visible,{key:'other',label:'Khác',value:rest,count:items.slice(limit-1).reduce((sum,item)=>sum+item.count,0)}];
+}
+
+function renderBarChart(id,items,options={}){
+  const container = document.getElementById(id);
+  const sorted = options.keepOrder ? items : [...items].sort((a,b)=>b.value-a.value);
+  const visible = compactChartItems(sorted,options.limit||10);
+  const maximum = Math.max(1,...visible.map(item=>item.value));
+  if(!visible.length){ container.innerHTML = '<div class="chart-empty">Không có dữ liệu phù hợp</div>'; return; }
+  container.innerHTML = visible.map((item,index)=>{
+    const width = Math.max(item.value?2:0,item.value/maximum*100);
+    const color = options.colors?.[item.key] || (index%2 ? '#2875A9' : '#178E78');
+    return `<div class="bar-row"><div class="bar-label">${esc(item.label)}</div><div class="bar-track" aria-hidden="true"><div class="bar-fill" style="width:${width.toFixed(2)}%;--bar-color:${color}"></div></div><div class="bar-value">${fmt(item.value)} đ</div></div>`;
+  }).join('');
+}
+
+function renderAnalytics(){
+  refreshAnalyticsOptions();
+  const entries = getAnalyticsEntries();
+  const total = entries.reduce((sum,entry)=>sum+entryAmounts(entry).afterTax,0);
+  const vatTotal = entries.reduce((sum,entry)=>sum+entryAmounts(entry).vatAmount,0);
+  document.getElementById('statsTotal').textContent = `${fmt(total)} đ`;
+  document.getElementById('statsCount').textContent = `${entries.length}`;
+  document.getElementById('statsAverage').textContent = `${fmt(entries.length?total/entries.length:0)} đ`;
+  document.getElementById('statsVatTotal').textContent = `${fmt(vatTotal)} đ`;
+
+  const mode = document.getElementById('statsPeriodMode').value;
+  const timeItems = aggregateExpenses(entries,
+    entry=>mode==='year' ? String(entry.date||'').slice(0,7) : String(entry.date||'').slice(0,10),
+    entry=>{
+      const date = String(entry.date||'');
+      if(!date) return 'Chưa có ngày';
+      if(mode==='year') return `Tháng ${Number(date.slice(5,7))}`;
+      return formatDateVN(date);
+    }
+  ).sort((a,b)=>a.key.localeCompare(b.key));
+  const groupItems = aggregateExpenses(entries,entry=>cleanCategory(entry.nhom)||'Chưa phân nhóm',entry=>cleanCategory(entry.nhom)||'Chưa phân nhóm');
+  const costItems = aggregateExpenses(entries,entry=>cleanCategory(entry.hp)||'Chưa phân nhóm',entry=>cleanCategory(entry.hp)||'Chưa phân nhóm');
+  const vatItems = [
+    {key:'vat',label:'Có VAT',value:entries.filter(entry=>entry.hasVat).reduce((sum,entry)=>sum+entryAmounts(entry).afterTax,0),count:entries.filter(entry=>entry.hasVat).length},
+    {key:'novat',label:'Không VAT',value:entries.filter(entry=>!entry.hasVat).reduce((sum,entry)=>sum+entryAmounts(entry).afterTax,0),count:entries.filter(entry=>!entry.hasVat).length}
+  ];
+  renderBarChart('statsTimeChart',timeItems,{keepOrder:true,limit:14});
+  renderBarChart('statsGroupChart',groupItems,{limit:9});
+  renderBarChart('statsCostGroupChart',costItems,{limit:9});
+  renderBarChart('statsVatChart',vatItems,{keepOrder:true,colors:{vat:'#C88420',novat:'#178E78'}});
+}
+
+function resetAnalyticsFilters(){
+  document.getElementById('statsPeriodMode').value = 'range';
+  document.getElementById('statsFromDate').value = '';
+  document.getElementById('statsToDate').value = '';
+  document.getElementById('statsMonth').value = new Date().toISOString().slice(0,7);
+  document.getElementById('statsYear').value = new Date().getFullYear();
+  document.getElementById('statsGroup').value = '';
+  document.getElementById('statsCostGroup').value = '';
+  document.getElementById('statsVat').value = 'all';
+  updateAnalyticsPeriodFields();
+  renderAnalytics();
 }
 
 function renderDashboardStats(entries){
@@ -1473,6 +1845,9 @@ function renderDashboardStats(entries){
 }
 
 function render(){
+  allEntries.forEach(entry=>rememberEntryCategories(entry,false));
+  refreshCategorySuggestions();
+  renderAnalytics();
   const filtered = getFiltered();
   const vatList = filtered.filter(e=>e.hasVat);
   const novatList = filtered.filter(e=>!e.hasVat);
@@ -2168,6 +2543,7 @@ function openModal(){
   document.getElementById('vatRateField').style.display='none';
   document.getElementById('vatAmountField').style.display='none';
   document.getElementById('f_date').value = new Date().toISOString().slice(0,10);
+  refreshCategorySuggestions();
   updatePreview();
   document.getElementById('overlay').classList.add('show');
 }
@@ -2183,6 +2559,7 @@ function editEntry(id){
   document.getElementById('f_nhom').value = e.nhom||'';
   document.getElementById('f_hp').value = e.hp||'';
   document.getElementById('f_ct').value = e.ct||'';
+  refreshCategorySuggestions();
   document.getElementById('f_chiphi').value = e.chiphi||'';
   document.getElementById('f_sl').value = e.sl||'';
   document.getElementById('f_dvt').value = e.dvt||'';
@@ -2260,6 +2637,7 @@ async function saveEntry(){
   }else{
     allEntries.push(entry);
   }
+  rememberEntryCategories(entry);
   queueOperation({type:'upsert',entry,updatedAt:now});
   cacheDeviceState();
   closeModal();
