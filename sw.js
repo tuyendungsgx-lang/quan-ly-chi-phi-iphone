@@ -1,0 +1,51 @@
+const CACHE_NAME = "factory-expense-shell-v4";
+const assetUrl = (path) => new URL(path, self.location.href).href;
+const FALLBACK_URL = assetUrl("./expense_ledger.html");
+const APP_SHELL = [
+  FALLBACK_URL,
+  assetUrl("./manifest.webmanifest"),
+  assetUrl("./icon-180.png"),
+  assetUrl("./icon-192.png"),
+  assetUrl("./icon-512.png"),
+];
+
+self.addEventListener("install", (event) => {
+  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)));
+  self.skipWaiting();
+});
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches
+      .keys()
+      .then((keys) => Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))))
+      .then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener("fetch", (event) => {
+  const request = event.request;
+  const url = new URL(request.url);
+  if (request.method !== "GET" || url.pathname.includes("/api/")) return;
+
+  if (request.mode === "navigate") {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response.ok) caches.open(CACHE_NAME).then((cache) => cache.put(request, response.clone()));
+          return response;
+        })
+        .catch(() => caches.match(request).then((cached) => cached || caches.match(FALLBACK_URL)))
+    );
+    return;
+  }
+
+  event.respondWith(
+    caches.match(request).then((cached) => cached || fetch(request).then((response) => {
+      if (response.ok && url.origin === self.location.origin) {
+        caches.open(CACHE_NAME).then((cache) => cache.put(request, response.clone()));
+      }
+      return response;
+    }))
+  );
+});
