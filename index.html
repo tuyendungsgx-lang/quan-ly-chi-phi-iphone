@@ -2334,6 +2334,11 @@ function reportTitle(tab){
   }[tab];
 }
 
+function reportFactoryHtml(){
+  const underlined = 'XỬ LÝ CHẤT THẢI RẮN';
+  return esc(REPORT_META.factory).replace(underlined,`<span class="factory-underline">${underlined}</span>`);
+}
+
 function reportPeriodHtml(context){
   const from = context.from ? formatDateVN(context.from) : '...../...../..........';
   const to = context.to ? formatDateVN(context.to) : '...../...../..........';
@@ -2386,13 +2391,8 @@ function totalPrintBody(context){
 
 function vatPrintBody(context){
   const entries = context.vat;
-  const rowCount = Math.max(23, entries.length);
   let spent = 0;
-  const rows = Array.from({length:rowCount},(_,index)=>{
-    const entry = entries[index];
-    if(!entry){
-      return `<tr><td class="center">${index+1}</td>${'<td></td>'.repeat(7)}<td class="number">0</td></tr>`;
-    }
+  const rows = entries.map((entry,index)=>{
     const amount = entryAmounts(entry);
     spent += amount.afterTax;
     return `<tr><td class="center">${index+1}</td><td class="center">${formatDateVN(entry.date,true)}</td>
@@ -2446,7 +2446,8 @@ function buildPrintDocument(tab){
       .sign-grid{display:grid;grid-template-columns:1fr 1fr;text-align:center;margin-top:5mm}.sign-box{min-height:${landscape?'39mm':'28mm'};position:relative;font-size:${landscape?'11pt':'9.5pt'}}
       .sign-name{position:absolute;bottom:0;left:0;right:0;font-weight:bold}.fixed-table+ .sign-date{margin-top:3mm}
       @media print{html,body{print-color-adjust:exact;-webkit-print-color-adjust:exact}.report-table tr{break-inside:avoid}}
-    </style></head><body><div class="page"><div class="org">${REPORT_META.company}<br>${REPORT_META.factory}</div>
+      .factory-underline{text-decoration:underline;text-decoration-thickness:0.7pt;text-underline-offset:1pt;}
+    </style></head><body><div class="page"><div class="org">${REPORT_META.company}<br>${reportFactoryHtml()}</div>
       <h1>${reportTitle(tab)}</h1>${reportPeriodHtml(context)}${body}</div></body></html>`;
 }
 
@@ -2647,15 +2648,11 @@ function buildVatXlsxSheet(context){
   rows.push(xlsxRowXml(7,['TT','Ngày','Chi phí','SL','ĐVT','Đơn giá','Thành tiền','VAT','Sau thuế'],Array(9).fill(4),28));
 
   const entries = context.vat;
-  const dataCount = Math.max(23,entries.length);
+  const dataCount = entries.length;
   const dataStart = 8;
   for(let index=0; index<dataCount; index++){
     const row = dataStart+index;
     const entry = entries[index];
-    if(!entry){
-      rows.push(xlsxRowXml(row,[index+1,'','','','','','','',{value:0,style:18}],[6,8,17,7,6,7,7,13,7],20));
-      continue;
-    }
     const amount = entryAmounts(entry);
     rows.push(xlsxRowXml(row,[
       index+1,excelDateSerial(entry.date),entry.chiphi||'',{value:amount.quantity,style:xlsxNumberStyle(amount.quantity)},entry.dvt||'',{value:amount.unitPrice,style:xlsxNumberStyle(amount.unitPrice)},
@@ -2670,7 +2667,10 @@ function buildVatXlsxSheet(context){
   const dataEnd = totalRow-1;
   const spentTotal = entries.reduce((sum,e)=>sum+entryAmounts(e).afterTax,0);
   merges.push(`F${totalRow}:H${totalRow}`);
-  rows.push(xlsxRowXml(totalRow,['','','','','','TỔNG:','','',{formula:`SUM(I${dataStart}:I${dataEnd})`,value:spentTotal,style:xlsxNumberStyle(spentTotal,'total')}],[0,0,0,0,0,9,9,9,10],22));
+  const totalValue = dataCount
+    ? {formula:`SUM(I${dataStart}:I${dataEnd})`,value:spentTotal,style:xlsxNumberStyle(spentTotal,'total')}
+    : {value:0,style:xlsxNumberStyle(0,'total')};
+  rows.push(xlsxRowXml(totalRow,['','','','','','TỔNG:','','',totalValue],[0,0,0,0,0,9,9,9,10],22));
   const dateRow = totalRow+2;
   const titleRow = dateRow+1;
   const nameRow = titleRow+4;
