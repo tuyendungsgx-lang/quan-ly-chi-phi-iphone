@@ -2410,17 +2410,11 @@ function vatPrintBody(context){
 
 function noVatPrintBody(context){
   const entries = context.novat;
-  const rowCount = Math.max(26, entries.length);
   let spent = 0;
-  const rows = Array.from({length:rowCount},(_,index)=>{
-    const entry = entries[index];
-    const tt = index + 24;
-    if(!entry){
-      return `<tr><td class="center">${tt}</td>${'<td></td>'.repeat(5)}<td class="number">0</td></tr>`;
-    }
+  const rows = entries.map((entry,index)=>{
     const amount = entryAmounts(entry);
     spent += amount.beforeTax;
-    return `<tr><td class="center">${tt}</td><td class="center">${formatDateVN(entry.date,true)}</td><td>${esc(entry.chiphi)}</td>
+    return `<tr><td class="center">${index+1}</td><td class="center">${formatDateVN(entry.date,true)}</td><td>${esc(entry.chiphi)}</td>
       <td class="number">${fmt(amount.quantity)}</td><td class="center">${esc(entry.dvt)}</td>
       <td class="number">${fmt(amount.unitPrice)}</td><td class="number">${fmt(amount.beforeTax)}</td></tr>`;
   }).join('');
@@ -2700,19 +2694,14 @@ function buildNoVatXlsxSheet(context){
   rows.push(xlsxRowXml(7,['TT','Ngày','Chi phí','SL','ĐVT','Đơn giá','Thành tiền'],Array(7).fill(4),28));
 
   const entries = context.novat;
-  const dataCount = Math.max(26,entries.length);
+  const dataCount = entries.length;
   const dataStart = 8;
   for(let index=0; index<dataCount; index++){
     const row = dataStart+index;
     const entry = entries[index];
-    const tt = index+24;
-    if(!entry){
-      rows.push(xlsxRowXml(row,[tt,'','','','','',{value:0,style:18}],[6,8,17,7,6,7,7],20));
-      continue;
-    }
     const amount = entryAmounts(entry);
     rows.push(xlsxRowXml(row,[
-      tt,excelDateSerial(entry.date),entry.chiphi||'',{value:amount.quantity,style:xlsxNumberStyle(amount.quantity)},entry.dvt||'',{value:amount.unitPrice,style:xlsxNumberStyle(amount.unitPrice)},
+      index+1,excelDateSerial(entry.date),entry.chiphi||'',{value:amount.quantity,style:xlsxNumberStyle(amount.quantity)},entry.dvt||'',{value:amount.unitPrice,style:xlsxNumberStyle(amount.unitPrice)},
       amount.hasManualTotal
         ? {value:amount.beforeTax,style:xlsxNumberStyle(amount.beforeTax)}
         : {formula:`D${row}*F${row}`,value:amount.beforeTax,style:xlsxNumberStyle(amount.beforeTax)}
@@ -2723,7 +2712,10 @@ function buildNoVatXlsxSheet(context){
   const dataEnd = totalRow-1;
   const spentTotal = entries.reduce((sum,e)=>sum+entryAmounts(e).beforeTax,0);
   merges.push(`E${totalRow}:F${totalRow}`);
-  rows.push(xlsxRowXml(totalRow,['','','','','TỔNG:','',{formula:`SUM(G${dataStart}:G${dataEnd})`,value:spentTotal,style:xlsxNumberStyle(spentTotal,'total')}],[0,0,0,0,9,9,10],22));
+  const totalValue = dataCount
+    ? {formula:`SUM(G${dataStart}:G${dataEnd})`,value:spentTotal,style:xlsxNumberStyle(spentTotal,'total')}
+    : {value:0,style:xlsxNumberStyle(0,'total')};
+  rows.push(xlsxRowXml(totalRow,['','','','','TỔNG:','',totalValue],[0,0,0,0,9,9,10],22));
   const dateRow = totalRow+2;
   const titleRow = dateRow+1;
   const nameRow = titleRow+4;
