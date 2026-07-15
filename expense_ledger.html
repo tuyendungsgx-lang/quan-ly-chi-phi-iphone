@@ -458,6 +458,25 @@
   .tab.active{background:#EFF5F8;color:var(--navy);box-shadow:none;border-bottom-color:var(--teal)}
   .tab .count{margin-left:6px;padding:2px 7px;border-radius:999px;background:#DCE5EC;color:#4C5C6C;font:750 10px/1.3 Inter,Arial,sans-serif}
   .tab.active .count{background:var(--teal);color:#fff}
+  .settlement-workspace{padding:20px;background:#F7FAFC}
+  .settlement-intro{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:14px}
+  .settlement-intro h2{margin:0;color:var(--navy);font-size:20px}
+  .settlement-intro p{margin:5px 0 0;color:var(--muted);font-size:12px}
+  .settlement-form{display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:12px;align-items:end;padding:16px;border:1px solid var(--line);border-radius:14px;background:#fff;box-shadow:0 6px 18px rgba(15,39,66,.04)}
+  .settlement-form .control input{width:100%}
+  .settlement-form-actions{display:flex;gap:8px}
+  .settlement-table-wrap{margin-top:16px;overflow:auto;border:1px solid var(--line);border-radius:14px;background:#fff}
+  .settlement-table{min-width:1180px}
+  .settlement-table th{text-align:center;white-space:normal;vertical-align:middle}
+  .settlement-table td{vertical-align:middle}
+  .settlement-period{min-width:150px;font-weight:750;color:var(--navy)}
+  .settlement-period small{display:block;margin-top:4px;color:var(--muted);font-weight:550}
+  .settlement-money{min-width:135px;text-align:right;font-variant-numeric:tabular-nums;font-weight:750;color:var(--navy)}
+  .settlement-money.positive{color:#087C68}.settlement-money.return{color:#B42F48}
+  .settlement-print{display:block;margin:7px 0 0 auto;padding:5px 8px;border:1px solid #BDD8D2;border-radius:7px;background:#F1F9F7;color:#087660;font:750 10px/1.2 Inter,Arial,sans-serif;cursor:pointer}
+  .settlement-status{min-width:130px;padding:8px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--text);font-weight:700}
+  .settlement-row-actions{display:flex;justify-content:center;gap:6px;margin-top:8px}
+  .settlement-note{margin:14px 2px 0;color:var(--muted);font-size:11px;line-height:1.5}
   .panel{margin:0;border:0;border-radius:0;background:#fff}
   .tablewrap{max-height:58vh;overflow:auto;-webkit-overflow-scrolling:touch}
   table{font:12px/1.35 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -592,6 +611,8 @@
     .toolbar{grid-template-columns:1fr 1fr}
     .search-control{grid-column:1/-1}
     .analytics-filters{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .settlement-form{grid-template-columns:1fr 1fr}
+    .settlement-form-actions{grid-column:1/-1}
   }
   @media(max-width:720px){
     .appbar{height:66px;padding:0 14px;gap:10px}
@@ -622,6 +643,12 @@
     .tab{flex:0 0 auto;min-height:43px;padding:10px 12px}
     .tablewrap{max-height:none}
     #tableArea table{min-width:900px}
+    .settlement-workspace{padding:14px}
+    .settlement-intro{display:block}
+    .settlement-form{grid-template-columns:1fr}
+    .settlement-form-actions{grid-column:auto}
+    .settlement-form-actions .btn{flex:1}
+    #tableArea .settlement-table{min-width:1180px}
     .stampbar{padding:0 14px 14px}
     .stamp{display:block;text-align:left}
     .stamp .amt{margin-top:5px}
@@ -758,7 +785,7 @@
     </section>
 
     <section class="content-card">
-      <div class="toolbar">
+      <div class="toolbar" id="expenseToolbar">
         <div class="control search-control">
           <label for="searchInput">Tìm kiếm khoản chi</label>
           <span class="search-glyph" aria-hidden="true">⌕</span>
@@ -782,8 +809,8 @@
         <div class="spacer"></div>
         <button class="btn btn-ghost" onclick="exportBackup()">↓ Sao lưu</button>
         <button class="btn btn-ghost" onclick="document.getElementById('backupFile').click()">↑ Khôi phục</button>
-        <button class="btn btn-excel" onclick="exportExcel()">↓ Xuất Excel</button>
-        <button class="btn btn-print" onclick="printCurrentReport()">▣ In biểu mẫu</button>
+        <button class="btn btn-excel" id="exportExcelBtn" onclick="exportExcel()">↓ Xuất Excel</button>
+        <button class="btn btn-print" id="printReportBtn" onclick="printCurrentReport()">▣ In biểu mẫu</button>
       </div>
       <input type="file" id="backupFile" accept="application/json,.json" hidden onchange="restoreBackup(this)">
 
@@ -791,6 +818,7 @@
         <button class="tab active" role="tab" data-tab="tong" onclick="switchTab('tong')">Tất cả <span class="count" id="cnt-tong">0</span></button>
         <button class="tab" role="tab" data-tab="vat" onclick="switchTab('vat')">Có VAT <span class="count" id="cnt-vat">0</span></button>
         <button class="tab" role="tab" data-tab="novat" onclick="switchTab('novat')">Không VAT <span class="count" id="cnt-novat">0</span></button>
+        <button class="tab" role="tab" data-tab="quyettoan" onclick="switchTab('quyettoan')">QUYẾT TOÁN <span class="count" id="cnt-quyettoan">0</span></button>
       </div>
 
       <div class="panel">
@@ -800,7 +828,7 @@
     </section>
   </main>
 
-  <button class="fab" onclick="openModal()" aria-label="Thêm khoản chi">+</button>
+  <button class="fab" id="expenseFab" onclick="openModal()" aria-label="Thêm khoản chi">+</button>
 </div>
 
 <div class="overlay" id="overlay">
@@ -1000,7 +1028,7 @@ const REPORT_META = Object.freeze({
 });
 let allEntries = [];
 let currentTab = 'tong';
-let reportSettings = {advance: 0};
+let reportSettings = {advance: 0, settlements: []};
 let categoryMemory = {groups:[],costGroups:[],details:[],relations:[]};
 let syncPromise = null;
 let syncLifecycleStarted = false;
@@ -1331,6 +1359,23 @@ async function normalizeAdvanceInput(input){
 }
 function parseYMD(d){ return d ? new Date(d+'T00:00:00') : null; }
 
+function normalizeReportSettings(value={}){
+  const settlements = Array.isArray(value?.settlements) ? value.settlements : [];
+  return {
+    advance:Number(value?.advance)||0,
+    settlements:settlements.filter(item=>item && item.id && item.from && item.to).map(item=>({
+      id:String(item.id),
+      batch:String(item.batch||''),
+      month:String(item.month||''),
+      from:String(item.from).slice(0,10),
+      to:String(item.to).slice(0,10),
+      status:item.status==='resolved'?'resolved':'pending',
+      createdAt:item.createdAt||new Date().toISOString(),
+      updatedAt:item.updatedAt||item.createdAt||new Date().toISOString()
+    }))
+  };
+}
+
 function readLocalJson(key,fallback){
   try{
     const raw = localStorage.getItem(key);
@@ -1568,6 +1613,7 @@ function prepareInitialCloudMigration(){
   if(migrations[userId]) return;
   allEntries.forEach(entry=>queueOperation({type:'upsert',entry,updatedAt:entry.updatedAt||entry.createdAt}));
   queueOperation({type:'setting',key:'advance',value:Number(reportSettings.advance)||0});
+  queueOperation({type:'setting',key:'settlements',value:reportSettings.settlements||[]});
   queueOperation({type:'setting',key:'categories',value:categoryMemory});
   migrations[userId]=new Date().toISOString();
   writeLocalJson(CLOUD_MIGRATION_KEY,migrations);
@@ -1711,10 +1757,10 @@ function cacheDeviceState(){
 function exportBackup(){
   const payload = {
     app:'Quản lý chi phí nhà máy',
-    version:1,
+    version:2,
     exportedAt:new Date().toISOString(),
     entries:allEntries,
-    settings:{advance:Number(reportSettings.advance)||0}
+    settings:normalizeReportSettings(reportSettings)
   };
   const blob = new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
   const link = document.createElement('a');
@@ -1742,12 +1788,13 @@ async function restoreBackup(input){
       createdAt:entry.createdAt || now,
       updatedAt:entry.updatedAt || new Date(Date.now()+index).toISOString()
     }));
-    reportSettings = {advance:Number(payload.settings?.advance)||0};
+    reportSettings = normalizeReportSettings(payload.settings);
     document.getElementById('reportAdvance').value = reportSettings.advance ? fmt(reportSettings.advance) : '';
     cacheDeviceState();
     if(!IS_DEVICE_ONLY){
       allEntries.forEach(entry=>queueOperation({type:'upsert',entry,updatedAt:entry.updatedAt}));
       queueOperation({type:'setting',key:'advance',value:reportSettings.advance});
+      queueOperation({type:'setting',key:'settlements',value:reportSettings.settlements});
       await syncWithServer();
     }
     render();
@@ -1832,7 +1879,10 @@ async function syncWithServer(){
       const remaining = getPendingOperations();
       const merged = applyPendingOperations(snapshot.entries,snapshot.settings,remaining);
       allEntries = merged.entries;
-      reportSettings = {advance:Number(merged.settings?.advance)||0};
+      reportSettings = normalizeReportSettings({
+        advance:merged.settings?.advance,
+        settlements:merged.settings?.settlements
+      });
       if(merged.settings?.categories){
         categoryMemory=mergeCategoryMemories(merged.settings.categories,categoryMemory);
         writeLocalJson(CATEGORY_MEMORY_KEY,categoryMemory);
@@ -1860,6 +1910,14 @@ async function syncWithServer(){
 async function persistReportSettings(){
   const updatedAt = new Date().toISOString();
   queueOperation({type:'setting',key:'advance',value:Number(reportSettings.advance)||0,updatedAt});
+  cacheDeviceState();
+  await syncWithServer();
+}
+
+async function persistSettlements(){
+  const updatedAt = new Date().toISOString();
+  reportSettings = normalizeReportSettings(reportSettings);
+  queueOperation({type:'setting',key:'settlements',value:reportSettings.settlements,updatedAt});
   cacheDeviceState();
   await syncWithServer();
 }
@@ -1950,7 +2008,7 @@ async function loadData(){
   const cached = readLocalJson(LOCAL_CACHE_KEY,null);
   if(cached && Array.isArray(cached.entries)){
     allEntries = cached.entries;
-    reportSettings = {advance:Number(cached.settings?.advance)||0};
+    reportSettings = normalizeReportSettings(cached.settings);
   }else{
     loadLegacyDeviceData();
   }
@@ -1985,9 +2043,15 @@ function updateReportFormNote(){
   const notes = {
     tong: 'Biểu mẫu in: Bảng tổng · A4 ngang',
     vat: 'Biểu mẫu in: Có VAT · A4 dọc',
-    novat: 'Biểu mẫu in: Không VAT · A4 dọc'
+    novat: 'Biểu mẫu in: Không VAT · A4 dọc',
+    quyettoan: 'Nhật ký quyết toán · bấm nút in tại từng cột số liệu'
   };
   document.getElementById('reportFormNote').textContent = notes[currentTab];
+  const isSettlement=currentTab==='quyettoan';
+  document.getElementById('expenseToolbar').hidden=isSettlement;
+  document.getElementById('exportExcelBtn').hidden=isSettlement;
+  document.getElementById('printReportBtn').hidden=isSettlement;
+  document.getElementById('expenseFab').hidden=isSettlement;
 }
 
 function clearFilter(){
@@ -2177,6 +2241,165 @@ function renderDashboardStats(entries){
   document.getElementById('kpiBalanceMeta').textContent = balance<0 ? 'Đã chi vượt ứng quỹ' : 'Ứng quỹ trừ tổng chi';
 }
 
+let settlementDraft = {id:'',batch:'',month:'',from:'',to:''};
+
+function defaultSettlementDraft(){
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth()+1).padStart(2,'0');
+  const day = String(today.getDate()).padStart(2,'0');
+  return {id:'',batch:'',month:`${month}/${year}`,from:`${year}-${month}-01`,to:`${year}-${month}-${day}`};
+}
+
+function ensureSettlementDraft(){
+  if(!settlementDraft.from || !settlementDraft.to) settlementDraft = defaultSettlementDraft();
+  return settlementDraft;
+}
+
+function updateSettlementDraft(field,value){
+  if(['batch','month','from','to'].includes(field)) settlementDraft[field]=value;
+}
+
+function entriesInSettlementPeriod(record){
+  return allEntries.filter(entry=>{
+    const date=String(entry.date||'').slice(0,10);
+    return date && date>=record.from && date<=record.to;
+  });
+}
+
+function calculateSettlementSummary(entries,advance){
+  const total = entries.reduce((sum,entry)=>sum+entryAmounts(entry).afterTax,0);
+  const withInvoice = entries.filter(entry=>entry.hasVat).reduce((sum,entry)=>sum+entryAmounts(entry).afterTax,0);
+  const withoutInvoice = entries.filter(entry=>!entry.hasVat).reduce((sum,entry)=>sum+entryAmounts(entry).afterTax,0);
+  const difference = total-(Number(advance)||0);
+  return {
+    total,withInvoice,withoutInvoice,
+    reimbursed:difference>0?difference:0,
+    returnAmount:difference<0?Math.abs(difference):0,
+    difference
+  };
+}
+
+function settlementContext(record){
+  const entries=entriesInSettlementPeriod(record);
+  return {
+    all:entries,
+    vat:entries.filter(entry=>entry.hasVat),
+    novat:entries.filter(entry=>!entry.hasVat),
+    from:record.from,
+    to:record.to
+  };
+}
+
+function settlementPeriodLabel(record){
+  const parts=[];
+  if(record.batch) parts.push(`Đợt ${esc(record.batch)}`);
+  if(record.month) parts.push(`Tháng ${esc(record.month)}`);
+  return parts.join(' / ') || 'Đợt quyết toán';
+}
+
+function settlementMoneyCell(value,label,id,tab,className=''){
+  return `<td class="settlement-money ${className}">${fmt(value)} đ<button type="button" class="settlement-print" onclick="printSettlementReport('${id}','${tab}')">▣ ${label}</button></td>`;
+}
+
+function renderSettlementJournal(area,stampArea){
+  const draft=ensureSettlementDraft();
+  const records=reportSettings.settlements||[];
+  const rows=records.map((record,index)=>{
+    const summary=calculateSettlementSummary(entriesInSettlementPeriod(record),reportSettings.advance);
+    return `<tr>
+      <td class="center">${index+1}</td>
+      <td class="settlement-period">${settlementPeriodLabel(record)}<small>${formatDateVN(record.from)} – ${formatDateVN(record.to)}</small></td>
+      ${settlementMoneyCell(summary.total,'In bảng tổng',record.id,'tong')}
+      ${settlementMoneyCell(summary.withInvoice,'In bảng Có VAT',record.id,'vat')}
+      ${settlementMoneyCell(summary.withoutInvoice,'In bảng Không VAT',record.id,'novat')}
+      <td class="settlement-money positive">${fmt(summary.reimbursed)} đ</td>
+      <td class="settlement-money return">${fmt(summary.returnAmount)} đ</td>
+      <td class="center"><select class="settlement-status" aria-label="Kết quả quyết toán" onchange="updateSettlementStatus('${record.id}',this.value)">
+        <option value="pending"${record.status==='pending'?' selected':''}>Chờ GQ</option>
+        <option value="resolved"${record.status==='resolved'?' selected':''}>Đã được GQ</option>
+      </select><div class="settlement-row-actions"><button class="btn-edit" onclick="editSettlement('${record.id}')">Sửa</button><button class="btn-danger" onclick="deleteSettlement('${record.id}')">Xóa</button></div></td>
+    </tr>`;
+  }).join('');
+
+  area.innerHTML=`<section class="settlement-workspace" aria-labelledby="settlementTitle">
+    <div class="settlement-intro"><div><h2 id="settlementTitle">Nhật ký quyết toán</h2><p>Tạo đợt/tháng, chọn thời gian và theo dõi chênh lệch với ứng quỹ.</p></div></div>
+    <div class="settlement-form">
+      <input type="hidden" id="qt_edit_id" value="${esc(draft.id)}">
+      <div class="control"><label for="qt_batch">Đợt quyết toán</label><input id="qt_batch" value="${esc(draft.batch)}" placeholder="VD: 1" oninput="updateSettlementDraft('batch',this.value)"></div>
+      <div class="control"><label for="qt_month">Tháng quyết toán</label><input id="qt_month" value="${esc(draft.month)}" placeholder="VD: 07/2026" oninput="updateSettlementDraft('month',this.value)"></div>
+      <div class="control"><label for="qt_from">Từ ngày</label><input type="date" id="qt_from" value="${esc(draft.from)}" oninput="updateSettlementDraft('from',this.value)"></div>
+      <div class="control"><label for="qt_to">Đến ngày</label><input type="date" id="qt_to" value="${esc(draft.to)}" oninput="updateSettlementDraft('to',this.value)"></div>
+      <div class="settlement-form-actions"><button type="button" class="btn btn-primary" onclick="saveSettlement()">${draft.id?'Cập nhật đợt':'Thêm đợt'}</button>${draft.id?'<button type="button" class="btn btn-ghost" onclick="cancelSettlementEdit()">Hủy sửa</button>':''}</div>
+    </div>
+    <div class="settlement-table-wrap">${records.length?`<table class="settlement-table"><thead><tr>
+      <th>TT</th><th>Thời gian</th><th>Tổng chi phí</th><th>Có HĐ</th><th>Không HĐ</th><th>Được hoàn<br><small>(Tổng chi &gt; Ứng quỹ)</small></th><th>Phải hoàn trả lại<br><small>(Tổng chi &lt; Ứng quỹ)</small></th><th>Kết quả QT</th>
+    </tr></thead><tbody>${rows}</tbody></table>`:'<div class="empty"><b>Chưa có đợt quyết toán</b><div>Nhập thông tin phía trên và bấm “Thêm đợt”.</div></div>'}</div>
+    <p class="settlement-note">Được hoàn = Tổng chi − Ứng quỹ khi chênh lệch dương. Phải hoàn trả = Ứng quỹ − Tổng chi khi chênh lệch âm. Khi hai số bằng nhau, cả hai cột bằng 0.</p>
+  </section>`;
+  stampArea.innerHTML='';
+}
+
+async function saveSettlement(){
+  const draft=ensureSettlementDraft();
+  const batch=String(document.getElementById('qt_batch')?.value||'').trim();
+  const month=String(document.getElementById('qt_month')?.value||'').trim();
+  const from=document.getElementById('qt_from')?.value||'';
+  const to=document.getElementById('qt_to')?.value||'';
+  if(!batch && !month){ showToast('Nhập Đợt hoặc Tháng quyết toán'); return; }
+  if(!from || !to){ showToast('Chọn đầy đủ Từ ngày và Đến ngày'); return; }
+  if(from>to){ showToast('Từ ngày không được sau Đến ngày'); return; }
+  const now=new Date().toISOString();
+  const existing=draft.id ? reportSettings.settlements.find(item=>item.id===draft.id) : null;
+  const record={
+    id:draft.id||`qt-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,
+    batch,month,from,to,status:existing?.status||'pending',
+    createdAt:existing?.createdAt||now,updatedAt:now
+  };
+  const index=reportSettings.settlements.findIndex(item=>item.id===record.id);
+  if(index>=0) reportSettings.settlements[index]=record;
+  else reportSettings.settlements.push(record);
+  settlementDraft=defaultSettlementDraft();
+  cacheDeviceState();
+  render();
+  showToast(existing?'Đã cập nhật đợt quyết toán':'Đã thêm đợt quyết toán');
+  await persistSettlements();
+}
+
+function editSettlement(id){
+  const record=reportSettings.settlements.find(item=>item.id===id);
+  if(!record) return;
+  settlementDraft={id:record.id,batch:record.batch,month:record.month,from:record.from,to:record.to};
+  render();
+  document.getElementById('settlementTitle')?.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function cancelSettlementEdit(){
+  settlementDraft=defaultSettlementDraft();
+  render();
+}
+
+async function deleteSettlement(id){
+  const record=reportSettings.settlements.find(item=>item.id===id);
+  if(!record || !confirm(`Xóa ${record.batch?`Đợt ${record.batch}`:'đợt quyết toán'}?`)) return;
+  reportSettings.settlements=reportSettings.settlements.filter(item=>item.id!==id);
+  if(settlementDraft.id===id) settlementDraft=defaultSettlementDraft();
+  cacheDeviceState();
+  render();
+  showToast('Đã xóa đợt quyết toán');
+  await persistSettlements();
+}
+
+async function updateSettlementStatus(id,status){
+  const record=reportSettings.settlements.find(item=>item.id===id);
+  if(!record) return;
+  record.status=status==='resolved'?'resolved':'pending';
+  record.updatedAt=new Date().toISOString();
+  cacheDeviceState();
+  showToast(record.status==='resolved'?'Đã ghi nhận: Đã được GQ':'Đã chuyển về: Chờ GQ');
+  await persistSettlements();
+}
+
 function render(){
   allEntries.forEach(entry=>rememberEntryCategories(entry,false));
   refreshCategorySuggestions();
@@ -2188,11 +2411,17 @@ function render(){
   document.getElementById('cnt-tong').textContent = filtered.length;
   document.getElementById('cnt-vat').textContent = vatList.length;
   document.getElementById('cnt-novat').textContent = novatList.length;
+  document.getElementById('cnt-quyettoan').textContent = reportSettings.settlements.length;
 
   let rows = [];
   let totalAfterTax = 0;
   const area = document.getElementById('tableArea');
   const stampArea = document.getElementById('stampArea');
+
+  if(currentTab==='quyettoan'){
+    renderSettlementJournal(area,stampArea);
+    return;
+  }
 
   if(currentTab==='tong'){
     if(filtered.length===0){ area.innerHTML = emptyState('Chưa có khoản chi nào','Bấm "Thêm khoản chi" để bắt đầu ghi bảng kê tổng.'); stampArea.innerHTML=''; return; }
@@ -2426,8 +2655,8 @@ function noVatPrintBody(context){
     </table>${signaturesHtml()}`;
 }
 
-function buildPrintDocument(tab){
-  const context = getReportContext();
+function buildPrintDocument(tab,contextOverride=null){
+  const context = contextOverride || getReportContext();
   const landscape = tab === 'tong';
   const body = tab === 'tong' ? totalPrintBody(context) : (tab === 'vat' ? vatPrintBody(context) : noVatPrintBody(context));
   return `<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><title>${reportTitle(tab)}</title>
@@ -2451,18 +2680,29 @@ function buildPrintDocument(tab){
       <h1>${reportTitle(tab)}</h1>${reportPeriodHtml(context)}${body}</div></body></html>`;
 }
 
-function printCurrentReport(){
+function printReportDocument(tab,context=null){
   const frame = document.createElement('iframe');
   frame.style.position='fixed'; frame.style.right='0'; frame.style.bottom='0';
   frame.style.width='0'; frame.style.height='0'; frame.style.border='0';
   document.body.appendChild(frame);
   const doc = frame.contentDocument || frame.contentWindow.document;
-  doc.open(); doc.write(buildPrintDocument(currentTab)); doc.close();
+  doc.open(); doc.write(buildPrintDocument(tab,context)); doc.close();
   setTimeout(()=>{
     frame.contentWindow.focus();
     frame.contentWindow.print();
     setTimeout(()=>frame.remove(), 1200);
   }, 300);
+}
+
+function printCurrentReport(){
+  if(currentTab==='quyettoan') return;
+  printReportDocument(currentTab);
+}
+
+function printSettlementReport(id,tab){
+  const record=reportSettings.settlements.find(item=>item.id===id);
+  if(!record || !['tong','vat','novat'].includes(tab)) return;
+  printReportDocument(tab,settlementContext(record));
 }
 
 function xmlEsc(value){

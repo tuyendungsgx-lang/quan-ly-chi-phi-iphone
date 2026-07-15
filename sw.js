@@ -1,4 +1,4 @@
-const CACHE_NAME = "factory-expense-shell-v9";
+const CACHE_NAME = "factory-expense-shell-v10";
 const assetUrl = (path) => new URL(path, self.location.href).href;
 const FALLBACK_URL = assetUrl("./expense_ledger.html");
 const APP_SHELL = [
