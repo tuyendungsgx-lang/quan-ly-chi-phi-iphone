@@ -890,6 +890,13 @@
           placeholder="VD: 1.250.000,50"
           oninput="formatVndTyping(this)" onblur="normalizeVndInput(this)">
       </div>
+      <div class="field">
+        <label>Thành tiền (VNĐ) · có thể nhập tay</label>
+        <input type="text" inputmode="decimal" autocomplete="off" id="f_thanhtien"
+          placeholder="Tự tính theo SL × Đơn giá"
+          data-manual="false"
+          oninput="formatManualTotalTyping(this)" onblur="normalizeManualTotalInput(this)">
+      </div>
       <div class="field full vat-switch">
         <div class="vat-row">
           <input type="checkbox" id="f_hasvat" onchange="toggleVatFields()">
@@ -1045,6 +1052,23 @@ function normalizeVndInput(input){
   updatePreview('base');
 }
 
+function formatManualTotalTyping(input){
+  input.dataset.manual = input.value.trim() ? 'true' : 'false';
+  formatCurrencyTyping(input);
+  updatePreview('total');
+}
+
+function normalizeManualTotalInput(input){
+  if(input.value.trim()){
+    normalizeCurrencyInput(input);
+    input.dataset.manual = 'true';
+    updatePreview('total');
+  }else{
+    input.dataset.manual = 'false';
+    updatePreview('base');
+  }
+}
+
 let ocrLibraryPromise = null;
 let ocrPreviewUrl = '';
 
@@ -1197,6 +1221,8 @@ function applyReceiptData(data){
   document.getElementById('f_sl').value = Number(data.quantity.toFixed(4));
   document.getElementById('f_dvt').value = data.unit;
   document.getElementById('f_dongia').value = data.unitPrice.toLocaleString('vi-VN',{maximumFractionDigits:2});
+  document.getElementById('f_thanhtien').value = '';
+  document.getElementById('f_thanhtien').dataset.manual = 'false';
   document.getElementById('f_hasvat').checked = data.hasVat;
   document.getElementById('f_vatrate').value = data.hasVat && data.vatRate ? Number(data.vatRate.toFixed(2)) : '';
   document.getElementById('f_vatamt').value = data.hasVat && data.vatAmount ? Number(data.vatAmount.toFixed(2)) : '';
@@ -2172,9 +2198,10 @@ function render(){
     if(filtered.length===0){ area.innerHTML = emptyState('Chưa có khoản chi nào','Bấm "Thêm khoản chi" để bắt đầu ghi bảng kê tổng.'); stampArea.innerHTML=''; return; }
     let sumThanhTien=0, sumVat=0, sumSauThue=0;
     filtered.forEach((e,i)=>{
-      const thanhTien = (Number(e.sl)||0) * (Number(e.dongia)||0);
-      const vatAmt = e.hasVat ? (Number(e.vatAmt)||0) : 0;
-      const sauThue = thanhTien + vatAmt;
+      const amount = entryAmounts(e);
+      const thanhTien = amount.beforeTax;
+      const vatAmt = amount.vatAmount;
+      const sauThue = amount.afterTax;
       sumThanhTien+=thanhTien; sumVat+=vatAmt; sumSauThue+=sauThue;
       rows.push(`<tr>
         <td>${i+1}</td>
@@ -2205,9 +2232,10 @@ function render(){
     if(vatList.length===0){ area.innerHTML = emptyState('Chưa có khoản chi VAT','Các khoản chi có VAT sẽ hiện ở đây.'); stampArea.innerHTML=''; return; }
     let sumThanhTien=0,sumVat=0,sumSauThue=0;
     vatList.forEach((e,i)=>{
-      const thanhTien = (Number(e.sl)||0) * (Number(e.dongia)||0);
-      const vatAmt = Number(e.vatAmt)||0;
-      const sauThue = thanhTien+vatAmt;
+      const amount = entryAmounts(e);
+      const thanhTien = amount.beforeTax;
+      const vatAmt = amount.vatAmount;
+      const sauThue = amount.afterTax;
       sumThanhTien+=thanhTien; sumVat+=vatAmt; sumSauThue+=sauThue;
       rows.push(`<tr>
         <td>${i+1}</td><td>${formatDateVN(e.date)}</td>
@@ -2230,7 +2258,7 @@ function render(){
     if(novatList.length===0){ area.innerHTML = emptyState('Chưa có khoản chi không VAT','Các khoản chi không VAT sẽ hiện ở đây.'); stampArea.innerHTML=''; return; }
     let sumThanhTien=0;
     novatList.forEach((e,i)=>{
-      const thanhTien = (Number(e.sl)||0) * (Number(e.dongia)||0);
+      const thanhTien = entryAmounts(e).beforeTax;
       sumThanhTien+=thanhTien;
       rows.push(`<tr>
         <td>${i+1}</td><td>${formatDateVN(e.date)}</td>
@@ -2266,11 +2294,14 @@ function esc(s){
 function entryAmounts(entry){
   const quantity = Number(entry.sl)||0;
   const unitPrice = Number(entry.dongia)||0;
-  const beforeTax = quantity * unitPrice;
+  const calculatedTotal = quantity * unitPrice;
+  const storedTotal = Number(entry.thanhTien);
+  const hasManualTotal = entry.manualTotal === true && Number.isFinite(storedTotal);
+  const beforeTax = hasManualTotal ? storedTotal : calculatedTotal;
   const vatAmount = entry.hasVat ? (Number(entry.vatAmt)||0) : 0;
   const storedRate = Number(entry.vatRate)||0;
   const vatRate = entry.hasVat ? (storedRate || (beforeTax ? vatAmount / beforeTax * 100 : 0)) : 0;
-  return {quantity, unitPrice, beforeTax, vatAmount, vatRate, afterTax: beforeTax + vatAmount};
+  return {quantity, unitPrice, beforeTax, vatAmount, vatRate, afterTax: beforeTax + vatAmount, hasManualTotal};
 }
 
 function formatDateVN(value, shortYear=false){
@@ -2574,7 +2605,9 @@ function buildTotalXlsxSheet(context){
     rows.push(xlsxRowXml(row,[
       index+1, excelDateSerial(entry.date), entry.nhom||'', entry.hp||'', entry.ct||'', entry.chiphi||'',
       {value:amount.quantity,style:xlsxNumberStyle(amount.quantity)}, entry.dvt||'', {value:amount.unitPrice,style:xlsxNumberStyle(amount.unitPrice)},
-      {formula:`G${row}*I${row}`,value:amount.beforeTax,style:xlsxNumberStyle(amount.beforeTax)},
+      amount.hasManualTotal
+        ? {value:amount.beforeTax,style:xlsxNumberStyle(amount.beforeTax)}
+        : {formula:`G${row}*I${row}`,value:amount.beforeTax,style:xlsxNumberStyle(amount.beforeTax)},
       entry.hasVat ? {value:amount.vatAmount,style:xlsxNumberStyle(amount.vatAmount)} : '',
       {formula:`J${row}+K${row}`,value:amount.afterTax,style:xlsxNumberStyle(amount.afterTax)}
     ],[6,8,5,6,6,17,7,6,7,7,7,7],22));
@@ -2632,7 +2665,9 @@ function buildVatXlsxSheet(context){
     const amount = entryAmounts(entry);
     rows.push(xlsxRowXml(row,[
       index+1,excelDateSerial(entry.date),entry.chiphi||'',{value:amount.quantity,style:xlsxNumberStyle(amount.quantity)},entry.dvt||'',{value:amount.unitPrice,style:xlsxNumberStyle(amount.unitPrice)},
-      {formula:`D${row}*F${row}`,value:amount.beforeTax,style:xlsxNumberStyle(amount.beforeTax)},amount.vatRate/100,
+      amount.hasManualTotal
+        ? {value:amount.beforeTax,style:xlsxNumberStyle(amount.beforeTax)}
+        : {formula:`D${row}*F${row}`,value:amount.beforeTax,style:xlsxNumberStyle(amount.beforeTax)},amount.vatRate/100,
       {formula:`G${row}*(1+H${row})`,value:amount.afterTax,style:xlsxNumberStyle(amount.afterTax)}
     ],[6,8,17,7,6,7,7,13,7],20));
   }
@@ -2678,7 +2713,9 @@ function buildNoVatXlsxSheet(context){
     const amount = entryAmounts(entry);
     rows.push(xlsxRowXml(row,[
       tt,excelDateSerial(entry.date),entry.chiphi||'',{value:amount.quantity,style:xlsxNumberStyle(amount.quantity)},entry.dvt||'',{value:amount.unitPrice,style:xlsxNumberStyle(amount.unitPrice)},
-      {formula:`D${row}*F${row}`,value:amount.beforeTax,style:xlsxNumberStyle(amount.beforeTax)}
+      amount.hasManualTotal
+        ? {value:amount.beforeTax,style:xlsxNumberStyle(amount.beforeTax)}
+        : {formula:`D${row}*F${row}`,value:amount.beforeTax,style:xlsxNumberStyle(amount.beforeTax)}
     ],[6,8,17,7,6,7,7],20));
   }
 
@@ -2845,7 +2882,8 @@ function openModal(){
   resetOcrPanel();
   document.getElementById('modalTitle').textContent = 'Thêm khoản chi';
   document.getElementById('editId').value = '';
-  ['f_date','f_nhom','f_hp','f_ct','f_chiphi','f_sl','f_dvt','f_dongia','f_vatrate','f_vatamt'].forEach(id=>document.getElementById(id).value='');
+  ['f_date','f_nhom','f_hp','f_ct','f_chiphi','f_sl','f_dvt','f_dongia','f_thanhtien','f_vatrate','f_vatamt'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f_thanhtien').dataset.manual = 'false';
   document.getElementById('f_hasvat').checked = false;
   document.getElementById('vatRateField').style.display='none';
   document.getElementById('vatAmountField').style.display='none';
@@ -2872,8 +2910,11 @@ function editEntry(id){
   document.getElementById('f_dvt').value = e.dvt||'';
   const dongia = Number(e.dongia);
   document.getElementById('f_dongia').value = Number.isFinite(dongia) ? fmt(dongia) : '';
+  const amount = entryAmounts(e);
+  document.getElementById('f_thanhtien').value = amount.beforeTax ? fmt(amount.beforeTax) : '';
+  document.getElementById('f_thanhtien').dataset.manual = amount.hasManualTotal ? 'true' : 'false';
   document.getElementById('f_hasvat').checked = !!e.hasVat;
-  const thanhTien = (Number(e.sl)||0) * (Number(e.dongia)||0);
+  const thanhTien = amount.beforeTax;
   const vatAmt = Number(e.vatAmt)||0;
   const inferredRate = thanhTien ? vatAmt / thanhTien * 100 : 0;
   const vatRate = Number.isFinite(Number(e.vatRate)) ? Number(e.vatRate) : inferredRate;
@@ -2899,7 +2940,12 @@ function updatePreview(source=''){
   document.getElementById('vatAmountField').style.display = hasVat? 'block':'none';
   const sl = Number(document.getElementById('f_sl').value)||0;
   const dg = parseVnd(document.getElementById('f_dongia').value);
-  const thanhTien = sl*dg;
+  const calculatedTotal = sl*dg;
+  const totalInput = document.getElementById('f_thanhtien');
+  if(source==='total') totalInput.dataset.manual = totalInput.value.trim() ? 'true' : 'false';
+  const manualTotal = totalInput.dataset.manual === 'true';
+  const thanhTien = manualTotal ? parseVnd(totalInput.value) : calculatedTotal;
+  if(!manualTotal && source!=='total') totalInput.value = thanhTien ? fmt(thanhTien) : '';
   const rateInput = document.getElementById('f_vatrate');
   const amountInput = document.getElementById('f_vatamt');
   let vatRate = hasVat ? (Number(rateInput.value)||0) : 0;
@@ -2921,6 +2967,11 @@ async function saveEntry(){
   const id = document.getElementById('editId').value;
   const existing = id ? allEntries.find(item=>item.id===id) : null;
   const now = new Date().toISOString();
+  const quantity = Number(document.getElementById('f_sl').value)||0;
+  const unitPrice = parseVnd(document.getElementById('f_dongia').value);
+  const totalInput = document.getElementById('f_thanhtien');
+  const manualTotal = totalInput.dataset.manual === 'true';
+  const beforeTax = manualTotal ? parseVnd(totalInput.value) : quantity*unitPrice;
   const entry = {
     id: id || ('e'+Date.now()+Math.random().toString(36).slice(2,7)),
     date: document.getElementById('f_date').value,
@@ -2928,9 +2979,11 @@ async function saveEntry(){
     hp: document.getElementById('f_hp').value.trim(),
     ct: document.getElementById('f_ct').value.trim(),
     chiphi: document.getElementById('f_chiphi').value.trim(),
-    sl: Number(document.getElementById('f_sl').value)||0,
+    sl: quantity,
     dvt: document.getElementById('f_dvt').value.trim(),
-    dongia: parseVnd(document.getElementById('f_dongia').value),
+    dongia: unitPrice,
+    thanhTien: beforeTax,
+    manualTotal,
     hasVat: document.getElementById('f_hasvat').checked,
     vatRate: Number(document.getElementById('f_vatrate').value)||0,
     vatAmt: Number(document.getElementById('f_vatamt').value)||0,
