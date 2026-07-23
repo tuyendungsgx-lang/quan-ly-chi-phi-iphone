@@ -2069,11 +2069,39 @@ document.getElementById('f_nhom').addEventListener('input',refreshCategorySugges
 document.getElementById('f_hp').addEventListener('input',refreshCategorySuggestions);
 document.getElementById('f_ct').addEventListener('focus',refreshCategorySuggestions);
 
+function entryCreatedTime(entry){
+  return String(entry.createdAt||entry.updatedAt||'');
+}
+
+function compareEntriesByDateAsc(a,b){
+  const dateOrder=String(a.date||'').localeCompare(String(b.date||''));
+  if(dateOrder) return dateOrder;
+  const createdOrder=entryCreatedTime(a).localeCompare(entryCreatedTime(b));
+  if(createdOrder) return createdOrder;
+  return String(a.id||'').localeCompare(String(b.id||''));
+}
+
+function compareEntriesByDateDesc(a,b){
+  const dateOrder=String(b.date||'').localeCompare(String(a.date||''));
+  if(dateOrder) return dateOrder;
+  const createdOrder=entryCreatedTime(b).localeCompare(entryCreatedTime(a));
+  if(createdOrder) return createdOrder;
+  return String(b.id||'').localeCompare(String(a.id||''));
+}
+
+function sortEntriesForDisplay(entries){
+  return [...entries].sort(compareEntriesByDateDesc);
+}
+
+function sortEntriesForReport(entries){
+  return [...entries].sort(compareEntriesByDateAsc);
+}
+
 function getFiltered(){
   const from = parseYMD(document.getElementById('fromDate').value);
   const to = parseYMD(document.getElementById('toDate').value);
   const query = document.getElementById('searchInput').value.trim().toLocaleLowerCase('vi');
-  return allEntries.filter(e=>{
+  return sortEntriesForDisplay(allEntries.filter(e=>{
     if(query){
       const haystack = [e.nhom,e.hp,e.ct,e.chiphi,e.dvt,e.dongia].join(' ').toLocaleLowerCase('vi');
       if(!haystack.includes(query)) return false;
@@ -2083,7 +2111,7 @@ function getFiltered(){
     if(from && d < from) return false;
     if(to && d > to) return false;
     return true;
-  }).sort((a,b)=> (a.date||'').localeCompare(b.date||''));
+  }));
 }
 
 function updateAnalyticsPeriodFields(){
@@ -2281,7 +2309,7 @@ function calculateSettlementSummary(entries,advance){
 }
 
 function settlementContext(record){
-  const entries=entriesInSettlementPeriod(record);
+  const entries=sortEntriesForReport(entriesInSettlementPeriod(record));
   return {
     all:entries,
     vat:entries.filter(entry=>entry.hasVat),
@@ -2542,7 +2570,7 @@ function formatDateVN(value, shortYear=false){
 }
 
 function getReportContext(){
-  const entries = getFiltered();
+  const entries = sortEntriesForReport(getFiltered());
   const dates = entries.map(e=>e.date).filter(Boolean).sort();
   const fromInput = document.getElementById('fromDate').value;
   const toInput = document.getElementById('toDate').value;
