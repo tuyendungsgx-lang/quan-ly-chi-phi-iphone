@@ -717,7 +717,7 @@
         <div class="kpi-icon">∑</div>
         <span class="kpi-label">Tổng chi sau thuế</span>
         <strong class="kpi-value" id="kpiTotal">0 đ</strong>
-        <span class="kpi-meta">Theo phạm vi đang lọc</span>
+        <span class="kpi-meta" id="kpiTotalMeta">Theo phạm vi đang lọc</span>
       </article>
       <article class="kpi-card vat">
         <div class="kpi-icon">VAT</div>
@@ -2249,9 +2249,47 @@ function resetAnalyticsFilters(){
   renderAnalytics();
 }
 
+function isValidYmd(value){
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value||'').slice(0,10));
+  if(!match) return false;
+  const date = new Date(Date.UTC(Number(match[1]),Number(match[2])-1,Number(match[3])));
+  return date.getUTCFullYear()===Number(match[1])
+    && date.getUTCMonth()===Number(match[2])-1
+    && date.getUTCDate()===Number(match[3]);
+}
+
+function localTodayYmd(date=new Date()){
+  return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+}
+
+function nextDayYmd(value){
+  const ymd=String(value||'').slice(0,10);
+  if(!isValidYmd(ymd)) return '';
+  const [year,month,day]=ymd.split('-').map(Number);
+  const date=new Date(Date.UTC(year,month-1,day));
+  date.setUTCDate(date.getUTCDate()+1);
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth()+1).padStart(2,'0')}-${String(date.getUTCDate()).padStart(2,'0')}`;
+}
+
+function getCurrentExpenseCycle(entries,settlements=[],asOf=localTodayYmd()){
+  const completedEnds=(Array.isArray(settlements)?settlements:[])
+    .map(record=>String(record?.to||'').slice(0,10))
+    .filter(date=>isValidYmd(date) && date<=asOf)
+    .sort();
+  const start=completedEnds.length ? nextDayYmd(completedEnds[completedEnds.length-1]) : '';
+  return {
+    start,
+    entries:start ? entries.filter(entry=>{
+      const date=String(entry?.date||'').slice(0,10);
+      return isValidYmd(date) && date>=start;
+    }) : entries
+  };
+}
+
 function renderDashboardStats(entries){
+  const cycle=getCurrentExpenseCycle(entries,reportSettings.settlements);
   let total=0,vat=0,vatCount=0;
-  entries.forEach(entry=>{
+  cycle.entries.forEach(entry=>{
     const amounts = entryAmounts(entry);
     total += amounts.afterTax;
     vat += amounts.vatAmount;
@@ -2260,6 +2298,9 @@ function renderDashboardStats(entries){
   const advance = Number(reportSettings.advance)||0;
   const balance = advance-total;
   document.getElementById('kpiTotal').textContent = `${fmt(total)} đ`;
+  document.getElementById('kpiTotalMeta').textContent = cycle.start
+    ? `Tính từ ngày ${formatDateVN(cycle.start)}`
+    : 'Theo phạm vi đang lọc';
   document.getElementById('kpiVat').textContent = `${fmt(vat)} đ`;
   document.getElementById('kpiVatMeta').textContent = `${vatCount} khoản có VAT`;
   document.getElementById('kpiBalance').textContent = `${fmt(balance)} đ`;
