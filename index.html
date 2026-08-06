@@ -471,11 +471,18 @@
   .settlement-table td{vertical-align:middle}
   .settlement-period{min-width:150px;font-weight:750;color:var(--navy)}
   .settlement-period small{display:block;margin-top:4px;color:var(--muted);font-weight:550}
+  .settlement-view{display:block;margin-top:8px;padding:5px 8px;border:1px solid #B9D1E6;border-radius:7px;background:#F2F7FC;color:#1D5F91;font:750 10px/1.2 Inter,Arial,sans-serif;cursor:pointer}
   .settlement-money{min-width:135px;text-align:right;font-variant-numeric:tabular-nums;font-weight:750;color:var(--navy)}
   .settlement-money.positive{color:#087C68}.settlement-money.return{color:#B42F48}
   .settlement-print{display:block;margin:7px 0 0 auto;padding:5px 8px;border:1px solid #BDD8D2;border-radius:7px;background:#F1F9F7;color:#087660;font:750 10px/1.2 Inter,Arial,sans-serif;cursor:pointer}
   .settlement-status{min-width:130px;padding:8px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--text);font-weight:700}
   .settlement-row-actions{display:flex;justify-content:center;gap:6px;margin-top:8px}
+  .settlement-details{margin-top:16px;padding:16px;border:1px solid var(--line);border-radius:14px;background:#fff;box-shadow:0 6px 18px rgba(15,39,66,.04)}
+  .settlement-details-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
+  .settlement-details-head h3{margin:0;color:var(--navy);font-size:16px}
+  .settlement-details-head p{margin:4px 0 0;color:var(--muted);font-size:11px}
+  .settlement-details-wrap{overflow:auto;border:1px solid var(--line);border-radius:10px}
+  .settlement-details-table{min-width:1000px}
   .settlement-note{margin:14px 2px 0;color:var(--muted);font-size:11px;line-height:1.5}
   .panel{margin:0;border:0;border-radius:0;background:#fff}
   .tablewrap{max-height:58vh;overflow:auto;-webkit-overflow-scrolling:touch}
@@ -2097,11 +2104,26 @@ function sortEntriesForReport(entries){
   return [...entries].sort(compareEntriesByDateAsc);
 }
 
+function isEntryInSettlement(entry,settlements=[]){
+  const date=String(entry?.date||'').slice(0,10);
+  if(!date) return false;
+  return (Array.isArray(settlements)?settlements:[]).some(record=>{
+    const from=String(record?.from||'').slice(0,10);
+    const to=String(record?.to||'').slice(0,10);
+    return from && to && from<=to && date>=from && date<=to;
+  });
+}
+
+function getUnsettledEntries(entries,settlements=[]){
+  return entries.filter(entry=>!isEntryInSettlement(entry,settlements));
+}
+
 function getFiltered(){
   const from = parseYMD(document.getElementById('fromDate').value);
   const to = parseYMD(document.getElementById('toDate').value);
   const query = document.getElementById('searchInput').value.trim().toLocaleLowerCase('vi');
-  return sortEntriesForDisplay(allEntries.filter(e=>{
+  const unsettledEntries=getUnsettledEntries(allEntries,reportSettings.settlements);
+  return sortEntriesForDisplay(unsettledEntries.filter(e=>{
     if(query){
       const haystack = [e.nhom,e.hp,e.ct,e.chiphi,e.dvt,e.dongia].join(' ').toLocaleLowerCase('vi');
       if(!haystack.includes(query)) return false;
@@ -2311,6 +2333,7 @@ function renderDashboardStats(entries){
 }
 
 let settlementDraft = {id:'',batch:'',month:'',from:'',to:''};
+let settlementDetailId = '';
 
 function defaultSettlementDraft(){
   const today = new Date();
@@ -2371,14 +2394,44 @@ function settlementMoneyCell(value,label,id,tab,className=''){
   return `<td class="settlement-money ${className}">${fmt(value)} đ<button type="button" class="settlement-print" onclick="printSettlementReport('${id}','${tab}')">▣ ${label}</button></td>`;
 }
 
+function toggleSettlementDetails(id){
+  settlementDetailId=settlementDetailId===id?'':id;
+  render();
+  document.getElementById('settlementDetails')?.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function settlementDetailsHtml(record){
+  if(!record) return '';
+  const entries=sortEntriesForReport(entriesInSettlementPeriod(record));
+  const rows=entries.map((entry,index)=>{
+    const amount=entryAmounts(entry);
+    return `<tr>
+      <td class="center">${index+1}</td><td>${formatDateVN(entry.date)}</td><td>${esc(entry.nhom)}</td><td>${esc(entry.hp)}</td>
+      <td class="wrap-cell">${esc(entry.chiphi)}</td><td class="num">${fmt(amount.quantity)}</td><td>${esc(entry.dvt)}</td>
+      <td class="num">${fmt(amount.beforeTax)}</td><td class="num">${entry.hasVat?fmt(amount.vatAmount):'—'}</td><td class="num">${fmt(amount.afterTax)}</td>
+    </tr>`;
+  }).join('');
+  return `<section class="settlement-details" id="settlementDetails" aria-labelledby="settlementDetailsTitle">
+    <div class="settlement-details-head"><div><h3 id="settlementDetailsTitle">Khoản chi đã đưa vào ${settlementPeriodLabel(record)}</h3>
+      <p>${formatDateVN(record.from)} – ${formatDateVN(record.to)} · ${entries.length} khoản</p></div>
+      <button type="button" class="btn btn-ghost" onclick="toggleSettlementDetails('${record.id}')">Đóng</button>
+    </div>
+    <div class="settlement-details-wrap">${entries.length?`<table class="settlement-details-table"><thead><tr>
+      <th>TT</th><th>Ngày</th><th>Nhóm</th><th>Nhóm hao phí</th><th>Chi phí</th><th>SL</th><th>ĐVT</th><th>Thành tiền</th><th>VAT</th><th>Sau thuế</th>
+    </tr></thead><tbody>${rows}</tbody></table>`:'<div class="empty"><b>Không có khoản chi trong thời gian này</b></div>'}</div>
+  </section>`;
+}
+
 function renderSettlementJournal(area,stampArea){
   const draft=ensureSettlementDraft();
   const records=reportSettings.settlements||[];
   const rows=records.map((record,index)=>{
-    const summary=calculateSettlementSummary(entriesInSettlementPeriod(record),reportSettings.advance);
+    const recordEntries=entriesInSettlementPeriod(record);
+    const summary=calculateSettlementSummary(recordEntries,reportSettings.advance);
     return `<tr>
       <td class="center">${index+1}</td>
-      <td class="settlement-period">${settlementPeriodLabel(record)}<small>${formatDateVN(record.from)} – ${formatDateVN(record.to)}</small></td>
+      <td class="settlement-period">${settlementPeriodLabel(record)}<small>${formatDateVN(record.from)} – ${formatDateVN(record.to)}</small>
+        <button type="button" class="settlement-view" onclick="toggleSettlementDetails('${record.id}')">${settlementDetailId===record.id?'Ẩn':'Xem'} ${recordEntries.length} khoản</button></td>
       ${settlementMoneyCell(summary.total,'In bảng tổng',record.id,'tong')}
       ${settlementMoneyCell(summary.withInvoice,'In bảng Có VAT',record.id,'vat')}
       ${settlementMoneyCell(summary.withoutInvoice,'In bảng Không VAT',record.id,'novat')}
@@ -2390,6 +2443,8 @@ function renderSettlementJournal(area,stampArea){
       </select><div class="settlement-row-actions"><button class="btn-edit" onclick="editSettlement('${record.id}')">Sửa</button><button class="btn-danger" onclick="deleteSettlement('${record.id}')">Xóa</button></div></td>
     </tr>`;
   }).join('');
+  const activeRecord=records.find(record=>record.id===settlementDetailId);
+  if(settlementDetailId && !activeRecord) settlementDetailId='';
 
   area.innerHTML=`<section class="settlement-workspace" aria-labelledby="settlementTitle">
     <div class="settlement-intro"><div><h2 id="settlementTitle">Nhật ký quyết toán</h2><p>Tạo đợt/tháng, chọn thời gian và theo dõi chênh lệch với ứng quỹ.</p></div></div>
@@ -2404,6 +2459,7 @@ function renderSettlementJournal(area,stampArea){
     <div class="settlement-table-wrap">${records.length?`<table class="settlement-table"><thead><tr>
       <th>TT</th><th>Thời gian</th><th>Tổng chi phí</th><th>Có HĐ</th><th>Không HĐ</th><th>Được hoàn<br><small>(Tổng chi &gt; Ứng quỹ)</small></th><th>Phải hoàn trả lại<br><small>(Tổng chi &lt; Ứng quỹ)</small></th><th>Kết quả QT</th>
     </tr></thead><tbody>${rows}</tbody></table>`:'<div class="empty"><b>Chưa có đợt quyết toán</b><div>Nhập thông tin phía trên và bấm “Thêm đợt”.</div></div>'}</div>
+    ${settlementDetailsHtml(activeRecord)}
     <p class="settlement-note">Được hoàn = Tổng chi − Ứng quỹ khi chênh lệch dương. Phải hoàn trả = Ứng quỹ − Tổng chi khi chênh lệch âm. Khi hai số bằng nhau, cả hai cột bằng 0.</p>
   </section>`;
   stampArea.innerHTML='';
@@ -2453,6 +2509,7 @@ async function deleteSettlement(id){
   if(!record || !confirm(`Xóa ${record.batch?`Đợt ${record.batch}`:'đợt quyết toán'}?`)) return;
   reportSettings.settlements=reportSettings.settlements.filter(item=>item.id!==id);
   if(settlementDraft.id===id) settlementDraft=defaultSettlementDraft();
+  if(settlementDetailId===id) settlementDetailId='';
   cacheDeviceState();
   render();
   showToast('Đã xóa đợt quyết toán');
@@ -2493,7 +2550,7 @@ function render(){
   }
 
   if(currentTab==='tong'){
-    if(filtered.length===0){ area.innerHTML = emptyState('Chưa có khoản chi nào','Bấm "Thêm khoản chi" để bắt đầu ghi bảng kê tổng.'); stampArea.innerHTML=''; return; }
+    if(filtered.length===0){ area.innerHTML = journalEmptyState('Không có khoản chi chưa quyết toán','Các khoản đã đưa vào quyết toán được lưu tại tab QUYẾT TOÁN.'); stampArea.innerHTML=''; return; }
     let sumThanhTien=0, sumVat=0, sumSauThue=0;
     filtered.forEach((e,i)=>{
       const amount = entryAmounts(e);
@@ -2527,7 +2584,7 @@ function render(){
   }
 
   if(currentTab==='vat'){
-    if(vatList.length===0){ area.innerHTML = emptyState('Chưa có khoản chi VAT','Các khoản chi có VAT sẽ hiện ở đây.'); stampArea.innerHTML=''; return; }
+    if(vatList.length===0){ area.innerHTML = journalEmptyState('Không có khoản Có VAT chưa quyết toán','Các khoản Có VAT đã quyết toán được xem tại tab QUYẾT TOÁN.'); stampArea.innerHTML=''; return; }
     let sumThanhTien=0,sumVat=0,sumSauThue=0;
     vatList.forEach((e,i)=>{
       const amount = entryAmounts(e);
@@ -2553,7 +2610,7 @@ function render(){
   }
 
   if(currentTab==='novat'){
-    if(novatList.length===0){ area.innerHTML = emptyState('Chưa có khoản chi không VAT','Các khoản chi không VAT sẽ hiện ở đây.'); stampArea.innerHTML=''; return; }
+    if(novatList.length===0){ area.innerHTML = journalEmptyState('Không có khoản Không VAT chưa quyết toán','Các khoản Không VAT đã quyết toán được xem tại tab QUYẾT TOÁN.'); stampArea.innerHTML=''; return; }
     let sumThanhTien=0;
     novatList.forEach((e,i)=>{
       const thanhTien = entryAmounts(e).beforeTax;
@@ -2580,6 +2637,9 @@ function stampHtml(label, amount){
 }
 function emptyState(title, sub){
   return `<div class="empty"><b>${title}</b><div>${sub}</div><button class="btn btn-primary" style="margin-top:18px" onclick="openModal()">+ Thêm khoản chi</button></div>`;
+}
+function journalEmptyState(title,sub){
+  return `<div class="empty"><b>${title}</b><div>${sub}</div><button class="btn btn-primary" style="margin-top:18px" onclick="switchTab('quyettoan')">Xem QUYẾT TOÁN</button></div>`;
 }
 function actionCell(id){
   return `<button class="btn-edit" onclick="editEntry('${id}')">Sửa</button><button class="btn-danger" onclick="deleteEntry('${id}')">Xóa</button>`;
