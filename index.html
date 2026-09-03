@@ -482,7 +482,9 @@
   .settlement-details-head h3{margin:0;color:var(--navy);font-size:16px}
   .settlement-details-head p{margin:4px 0 0;color:var(--muted);font-size:11px}
   .settlement-details-wrap{overflow:auto;border:1px solid var(--line);border-radius:10px}
-  .settlement-details-table{min-width:1000px}
+  .settlement-details-table{min-width:1080px}
+  .settlement-edit-cell{width:88px;min-width:88px;text-align:center}
+  .settlement-edit-cell .btn-edit{margin-right:0}
   .settlement-note{margin:14px 2px 0;color:var(--muted);font-size:11px;line-height:1.5}
   .panel{margin:0;border:0;border-radius:0;background:#fff}
   .tablewrap{max-height:58vh;overflow:auto;-webkit-overflow-scrolling:touch}
@@ -2422,6 +2424,7 @@ function settlementDetailsHtml(record){
       <td class="center">${index+1}</td><td>${formatDateVN(entry.date)}</td><td>${esc(entry.nhom)}</td><td>${esc(entry.hp)}</td>
       <td class="wrap-cell">${esc(entry.chiphi)}</td><td class="num">${amount.quantityText}</td><td>${esc(entry.dvt)}</td>
       <td class="num">${fmt(amount.beforeTax)}</td><td class="num">${entry.hasVat?fmt(amount.vatAmount):'—'}</td><td class="num">${fmt(amount.afterTax)}</td>
+      <td class="settlement-edit-cell"><button type="button" class="btn-edit settlement-edit-btn" data-entry-id="${esc(entry.id)}" aria-label="Sửa khoản chi số ${index+1}" onclick="editEntry(this.dataset.entryId)">Sửa</button></td>
     </tr>`;
   }).join('');
   return `<section class="settlement-details" id="settlementDetails" aria-labelledby="settlementDetailsTitle">
@@ -2430,7 +2433,7 @@ function settlementDetailsHtml(record){
       <button type="button" class="btn btn-ghost" onclick="toggleSettlementDetails('${record.id}')">Đóng</button>
     </div>
     <div class="settlement-details-wrap">${entries.length?`<table class="settlement-details-table"><thead><tr>
-      <th>TT</th><th>Ngày</th><th>Nhóm</th><th>Nhóm hao phí</th><th>Chi phí</th><th>SL</th><th>ĐVT</th><th>Thành tiền</th><th>VAT</th><th>Sau thuế</th>
+      <th>TT</th><th>Ngày</th><th>Nhóm</th><th>Nhóm hao phí</th><th>Chi phí</th><th>SL</th><th>ĐVT</th><th>Thành tiền</th><th>VAT</th><th>Sau thuế</th><th>Thao tác</th>
     </tr></thead><tbody>${rows}</tbody></table>`:'<div class="empty"><b>Không có khoản chi trong thời gian này</b></div>'}</div>
   </section>`;
 }
