@@ -466,15 +466,18 @@
   .settlement-form .control input{width:100%}
   .settlement-form-actions{display:flex;gap:8px}
   .settlement-table-wrap{margin-top:16px;overflow:auto;border:1px solid var(--line);border-radius:14px;background:#fff}
-  .settlement-table{min-width:1180px}
+  .settlement-table{min-width:1440px}
   .settlement-table th{text-align:center;white-space:normal;vertical-align:middle}
   .settlement-table td{vertical-align:middle}
   .settlement-period{min-width:150px;font-weight:750;color:var(--navy)}
   .settlement-period small{display:block;margin-top:4px;color:var(--muted);font-weight:550}
   .settlement-view{display:block;margin-top:8px;padding:5px 8px;border:1px solid #B9D1E6;border-radius:7px;background:#F2F7FC;color:#1D5F91;font:750 10px/1.2 Inter,Arial,sans-serif;cursor:pointer}
-  .settlement-money{min-width:135px;text-align:right;font-variant-numeric:tabular-nums;font-weight:750;color:var(--navy)}
+  .settlement-money{min-width:220px;text-align:right;font-variant-numeric:tabular-nums;font-weight:750;color:var(--navy)}
   .settlement-money.positive{color:#087C68}.settlement-money.return{color:#B42F48}
-  .settlement-print{display:block;margin:7px 0 0 auto;padding:5px 8px;border:1px solid #BDD8D2;border-radius:7px;background:#F1F9F7;color:#087660;font:750 10px/1.2 Inter,Arial,sans-serif;cursor:pointer}
+  .settlement-report-actions{display:flex;justify-content:flex-end;gap:6px;margin-top:8px;white-space:nowrap}
+  .settlement-print,.settlement-excel{display:inline-flex;align-items:center;justify-content:center;margin:0;padding:5px 8px;border-radius:7px;font:750 10px/1.2 Inter,Arial,sans-serif;cursor:pointer}
+  .settlement-print{border:1px solid #BDD8D2;background:#F1F9F7;color:#087660}
+  .settlement-excel{border:1px solid #B9DDE2;background:#EFF9FA;color:#0A6772}
   .settlement-status{min-width:130px;padding:8px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--text);font-weight:700}
   .settlement-row-actions{display:flex;justify-content:center;gap:6px;margin-top:8px}
   .settlement-details{margin-top:16px;padding:16px;border:1px solid var(--line);border-radius:14px;background:#fff;box-shadow:0 6px 18px rgba(15,39,66,.04)}
@@ -2406,7 +2409,7 @@ function settlementPeriodLabel(record){
 }
 
 function settlementMoneyCell(value,label,id,tab,className=''){
-  return `<td class="settlement-money ${className}">${fmt(value)} đ<button type="button" class="settlement-print" onclick="printSettlementReport('${id}','${tab}')">▣ ${label}</button></td>`;
+  return `<td class="settlement-money ${className}"><div>${fmt(value)} đ</div><div class="settlement-report-actions"><button type="button" class="settlement-print" onclick="printSettlementReport('${id}','${tab}')">▣ ${label}</button><button type="button" class="settlement-excel" aria-label="Xuất Excel ${label}" onclick="exportSettlementExcel('${id}','${tab}')">↓ Xuất Excel</button></div></td>`;
 }
 
 function toggleSettlementDetails(id){
@@ -3126,9 +3129,12 @@ function buildNoVatXlsxSheet(context){
   };
 }
 
-function xlsxWorkbookFiles(context){
-  const sheets = [buildTotalXlsxSheet(context),buildVatXlsxSheet(context),buildNoVatXlsxSheet(context)];
-  const lastColumns = ['L','I','G'];
+function xlsxWorkbookFiles(context,sheetTabs=['tong','vat','novat']){
+  const sheetBuilders = {tong:buildTotalXlsxSheet,vat:buildVatXlsxSheet,novat:buildNoVatXlsxSheet};
+  const lastColumnsByTab = {tong:'L',vat:'I',novat:'G'};
+  const tabs = sheetTabs.filter(tab=>Object.prototype.hasOwnProperty.call(sheetBuilders,tab));
+  const sheets = tabs.map(tab=>sheetBuilders[tab](context));
+  const lastColumns = tabs.map(tab=>lastColumnsByTab[tab]);
   const sheetOverrides = sheets.map((_,index)=>`<Override PartName="/xl/worksheets/sheet${index+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('');
   const sheetNodes = sheets.map((sheet,index)=>`<sheet name="${xmlEsc(sheet.name)}" sheetId="${index+1}" r:id="rId${index+1}"/>`).join('');
   const definedNames = sheets.map((sheet,index)=>{
@@ -3137,6 +3143,7 @@ function xlsxWorkbookFiles(context){
       `<definedName name="_xlnm.Print_Titles" localSheetId="${index}">'${xmlEsc(safeName)}'!$${sheet.printTitleRow}:$${sheet.printTitleRow}</definedName>`;
   }).join('');
   const sheetRelationships = sheets.map((_,index)=>`<Relationship Id="rId${index+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${index+1}.xml"/>`).join('');
+  const stylesRelationshipId = `rId${sheets.length+1}`;
   const now = new Date().toISOString();
 
   const files = [
@@ -3161,15 +3168,15 @@ function xlsxWorkbookFiles(context){
     {name:'docProps/app.xml',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
       <Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">
         <Application>Quản Lý Chi Phí Nhà Máy</Application><DocSecurity>0</DocSecurity><ScaleCrop>false</ScaleCrop>
-        <HeadingPairs><vt:vector size="2" baseType="variant"><vt:variant><vt:lpstr>Worksheets</vt:lpstr></vt:variant><vt:variant><vt:i4>3</vt:i4></vt:variant></vt:vector></HeadingPairs>
-        <TitlesOfParts><vt:vector size="3" baseType="lpstr">${sheets.map(sheet=>`<vt:lpstr>${xmlEsc(sheet.name)}</vt:lpstr>`).join('')}</vt:vector></TitlesOfParts>
+        <HeadingPairs><vt:vector size="2" baseType="variant"><vt:variant><vt:lpstr>Worksheets</vt:lpstr></vt:variant><vt:variant><vt:i4>${sheets.length}</vt:i4></vt:variant></vt:vector></HeadingPairs>
+        <TitlesOfParts><vt:vector size="${sheets.length}" baseType="lpstr">${sheets.map(sheet=>`<vt:lpstr>${xmlEsc(sheet.name)}</vt:lpstr>`).join('')}</vt:vector></TitlesOfParts>
       </Properties>`},
     {name:'xl/workbook.xml',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
       <workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
         <bookViews><workbookView/></bookViews><sheets>${sheetNodes}</sheets><definedNames>${definedNames}</definedNames><calcPr calcId="191029" fullCalcOnLoad="1" forceFullCalc="1"/>
       </workbook>`},
     {name:'xl/_rels/workbook.xml.rels',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-      <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${sheetRelationships}<Relationship Id="rId4" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`},
+        <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${sheetRelationships}<Relationship Id="${stylesRelationshipId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`},
     {name:'xl/styles.xml',data:xlsxStylesXml()}
   ];
   sheets.forEach((sheet,index)=>files.push({name:`xl/worksheets/sheet${index+1}.xml`,data:sheet.xml}));
@@ -3253,18 +3260,26 @@ function downloadFile(blob,filename){
   setTimeout(()=>URL.revokeObjectURL(url),1500);
 }
 
-function exportExcel(){
+function exportExcel(contextOverride=null,sheetTabs=['tong','vat','novat'],filenamePrefix='Bang_ke_chi_phi',successMessage='Đã tạo Excel gồm 3 biểu mẫu'){
   try{
-    const context = getReportContext();
-    const bytes = createZip(xlsxWorkbookFiles(context));
+    const context = contextOverride || getReportContext();
+    const bytes = createZip(xlsxWorkbookFiles(context,sheetTabs));
     const from = (context.from||'tu-ngay').replace(/-/g,'');
     const to = (context.to||'den-ngay').replace(/-/g,'');
-    downloadFile(new Blob([bytes],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),`Bang_ke_chi_phi_${from}_${to}.xlsx`);
-    showToast('Đã tạo Excel gồm 3 biểu mẫu');
+    downloadFile(new Blob([bytes],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),`${filenamePrefix}_${from}_${to}.xlsx`);
+    showToast(successMessage);
   }catch(error){
     console.error(error);
     showToast('Không thể tạo tệp Excel');
   }
+}
+
+function exportSettlementExcel(id,tab){
+  const record=reportSettings.settlements.find(item=>item.id===id);
+  const reports={tong:{file:'Bang_tong',label:'Bảng tổng'},vat:{file:'Bang_Co_VAT',label:'Bảng Có VAT'},novat:{file:'Bang_Khong_VAT',label:'Bảng Không VAT'}};
+  const report=reports[tab];
+  if(!record || !report) return;
+  exportExcel(settlementContext(record),[tab],`Quyet_toan_${report.file}`,`Đã tạo Excel ${report.label}`);
 }
 
 function openModal(){
