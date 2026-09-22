@@ -2971,6 +2971,13 @@ function xlsxNumberStyle(value,kind='body'){
   return integer ? 18 : 7;
 }
 
+// SL is exported as the same display text used in the application.  This
+// retains every decimal digit the user typed (including trailing zeroes) and
+// prevents Excel locale formatting from adding an extra separator.
+function xlsxQuantityCell(entry,amount){
+  return {value:amount.quantityText ?? fmtQuantity(entry),style:7};
+}
+
 function xlsxPeriodText(context){
   const from = context.from ? formatDateVN(context.from) : '...../...../..........';
   const to = context.to ? formatDateVN(context.to) : '...../...../..........';
@@ -2999,10 +3006,8 @@ function buildTotalXlsxSheet(context){
     const amount = entryAmounts(entry);
     rows.push(xlsxRowXml(row,[
       index+1, excelDateSerial(entry.date), entry.nhom||'', entry.hp||'', entry.ct||'', entry.chiphi||'',
-      {value:amount.quantity,style:21}, entry.dvt||'', {value:amount.unitPrice,style:xlsxNumberStyle(amount.unitPrice)},
-      amount.hasManualTotal
-        ? {value:amount.beforeTax,style:xlsxNumberStyle(amount.beforeTax)}
-        : {formula:`G${row}*I${row}`,value:amount.beforeTax,style:xlsxNumberStyle(amount.beforeTax)},
+      xlsxQuantityCell(entry,amount), entry.dvt||'', {value:amount.unitPrice,style:xlsxNumberStyle(amount.unitPrice)},
+      {value:amount.beforeTax,style:xlsxNumberStyle(amount.beforeTax)},
       entry.hasVat ? {value:amount.vatAmount,style:xlsxNumberStyle(amount.vatAmount)} : '',
       {formula:`J${row}+K${row}`,value:amount.afterTax,style:xlsxNumberStyle(amount.afterTax)}
     ],[6,8,5,6,6,17,7,6,7,7,7,7],22));
@@ -3055,10 +3060,8 @@ function buildVatXlsxSheet(context){
     const entry = entries[index];
     const amount = entryAmounts(entry);
     rows.push(xlsxRowXml(row,[
-      index+1,excelDateSerial(entry.date),entry.chiphi||'',{value:amount.quantity,style:21},entry.dvt||'',{value:amount.unitPrice,style:xlsxNumberStyle(amount.unitPrice)},
-      amount.hasManualTotal
-        ? {value:amount.beforeTax,style:xlsxNumberStyle(amount.beforeTax)}
-        : {formula:`D${row}*F${row}`,value:amount.beforeTax,style:xlsxNumberStyle(amount.beforeTax)},amount.vatRate/100,
+      index+1,excelDateSerial(entry.date),entry.chiphi||'',xlsxQuantityCell(entry,amount),entry.dvt||'',{value:amount.unitPrice,style:xlsxNumberStyle(amount.unitPrice)},
+      {value:amount.beforeTax,style:xlsxNumberStyle(amount.beforeTax)},amount.vatRate/100,
       {formula:`G${row}*(1+H${row})`,value:amount.afterTax,style:xlsxNumberStyle(amount.afterTax)}
     ],[6,8,17,7,6,7,7,13,7],20));
   }
@@ -3101,10 +3104,8 @@ function buildNoVatXlsxSheet(context){
     const entry = entries[index];
     const amount = entryAmounts(entry);
     rows.push(xlsxRowXml(row,[
-      index+1,excelDateSerial(entry.date),entry.chiphi||'',{value:amount.quantity,style:21},entry.dvt||'',{value:amount.unitPrice,style:xlsxNumberStyle(amount.unitPrice)},
-      amount.hasManualTotal
-        ? {value:amount.beforeTax,style:xlsxNumberStyle(amount.beforeTax)}
-        : {formula:`D${row}*F${row}`,value:amount.beforeTax,style:xlsxNumberStyle(amount.beforeTax)}
+      index+1,excelDateSerial(entry.date),entry.chiphi||'',xlsxQuantityCell(entry,amount),entry.dvt||'',{value:amount.unitPrice,style:xlsxNumberStyle(amount.unitPrice)},
+      {value:amount.beforeTax,style:xlsxNumberStyle(amount.beforeTax)}
     ],[6,8,17,7,6,7,7],20));
   }
 
